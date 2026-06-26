@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="luxury">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE PROTOCOL — MVP Data Selection</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Special+Elite&display=swap');
+
+    :root {
+      --redact: #111;
+      --stamp-red: #c0392b;
+      --stamp-green: #1a6b3c;
+      --paper: #1a1712;
+    }
+
+    body {
+      background-color: #0d0d0d;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .doc-header {
+      border-top: 3px solid #888;
+      border-bottom: 3px solid #888;
+      letter-spacing: 0.3em;
+    }
+
+    .section-divider {
+      border: none;
+      border-top: 1px dashed #444;
+      margin: 2rem 0;
+    }
+
+    .classified-stamp {
+      display: inline-block;
+      border: 3px solid var(--stamp-red);
+      color: var(--stamp-red);
+      padding: 2px 10px;
+      letter-spacing: 0.2em;
+      font-weight: bold;
+      transform: rotate(-3deg);
+      font-size: 0.75rem;
+      opacity: 0.85;
+    }
+
+    .principal-card, .anomaly-card {
+      position: relative;
+      border: 1px solid #333;
+      background: #111;
+      transition: border-color 0.15s, background 0.15s;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .principal-card:hover, .anomaly-card:hover {
+      border-color: #666;
+      background: #161616;
+    }
+
+    .principal-card.selected {
+      border-color: #8b7536;
+      background: #1a1608;
+      box-shadow: 0 0 0 2px #8b7536, inset 0 0 30px rgba(139,117,54,0.06);
+    }
+
+    .anomaly-card.selected {
+      border-color: #8b2c2c;
+      background: #1a0808;
+      box-shadow: 0 0 0 2px #8b2c2c, inset 0 0 30px rgba(139,44,44,0.06);
+    }
+
+    .card-codename {
+      font-family: 'Share Tech Mono', monospace;
+      letter-spacing: 0.15em;
+      font-size: 1rem;
+      font-weight: bold;
+    }
+
+    .principal-card.selected .card-codename { color: #d4af37; }
+    .anomaly-card.selected .card-codename { color: #e05252; }
+
+    .select-indicator {
+      width: 20px;
+      height: 20px;
+      border: 1px solid #555;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .principal-card.selected .select-indicator {
+      border-color: #d4af37;
+      background: #d4af37;
+      color: #000;
+    }
+
+    .anomaly-card.selected .select-indicator {
+      border-color: #e05252;
+      background: #e05252;
+      color: #000;
+    }
+
+    .weakness-tag {
+      font-size: 0.65rem;
+      letter-spacing: 0.08em;
+      padding: 1px 6px;
+      border: 1px solid #5a3a3a;
+      color: #c08080;
+      background: #1a0d0d;
+      display: inline-block;
+    }
+
+    .principal-card .weakness-tag {
+      border-color: #3a4a2a;
+      color: #80a060;
+      background: #0d150d;
+    }
+
+    .count-badge {
+      font-family: 'Share Tech Mono', monospace;
+      font-size: 0.85rem;
+      padding: 4px 12px;
+      border: 1px solid #555;
+      letter-spacing: 0.1em;
+    }
+
+    .count-badge.maxed { border-color: #d4af37; color: #d4af37; }
+    .anomaly-count.maxed { border-color: #e05252; color: #e05252; }
+
+    .submit-zone {
+      border: 1px dashed #444;
+      background: #0d0d0d;
+    }
+
+    .redact-bar {
+      display: inline-block;
+      background: #1a1a1a;
+      color: #1a1a1a;
+      border: 1px solid #333;
+      padding: 0 4px;
+      letter-spacing: 0.05em;
+      font-size: 0.7rem;
+    }
+
+    .personality-text {
+      font-size: 0.8rem;
+      line-height: 1.6;
+      color: #aaa;
+    }
+
+    .section-label {
+      letter-spacing: 0.3em;
+      font-size: 0.7rem;
+      color: #666;
+      text-transform: uppercase;
+    }
+
+    .doc-id {
+      font-size: 0.6rem;
+      color: #444;
+      letter-spacing: 0.15em;
+    }
+
+    .principal-number, .anomaly-number {
+      font-size: 0.65rem;
+      color: #555;
+      letter-spacing: 0.1em;
+    }
+
+    .grid-principals, .grid-anomalies {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 12px;
+    }
+
+    .submit-btn {
+      letter-spacing: 0.2em;
+      font-family: 'Share Tech Mono', monospace;
+    }
+
+    .header-bar {
+      background: linear-gradient(180deg, #1a1a1a 0%, #111 100%);
+      border-bottom: 1px solid #333;
+    }
+
+    .tab-btn {
+      letter-spacing: 0.15em;
+      font-size: 0.8rem;
+      padding: 8px 20px;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+      background: transparent;
+      border: none;
+      cursor: pointer;
+      color: #666;
+    }
+
+    .tab-btn.active-principal { color: #d4af37; border-bottom: 2px solid #d4af37; }
+    .tab-btn.active-anomaly { color: #e05252; border-bottom: 2px solid #e05252; }
+    .tab-btn:not(.active-principal):not(.active-anomaly):hover { color: #aaa; }
+
+    .pane { display: none; }
+    .pane.visible { display: block; }
+  </style>
+</head>
+<body class="min-h-screen p-4 md:p-8">
+
+  <!-- Document Header -->
+  <div class="max-w-5xl mx-auto">
+    <div class="header-bar p-4 mb-6">
+      <div class="flex justify-between items-start flex-wrap gap-2">
+        <div>
+          <div class="section-label mb-1">foundation internal document</div>
+          <div class="text-2xl font-bold tracking-widest text-base-content">THE PROTOCOL</div>
+          <div class="doc-id mt-1">DOC-MVP-001 // DIRECTOR BRIEFING // PERSONNEL & ANOMALY ROSTER SELECTION</div>
+        </div>
+        <div class="text-right">
+          <div class="classified-stamp">CLASSIFIED</div>
+          <div class="doc-id mt-3">CLEARANCE: DIRECTOR LEVEL</div>
+          <div class="doc-id">CYCLE 0000 — PRE-ACTIVATION</div>
+        </div>
+      </div>
+      <hr class="section-divider" />
+      <p class="personality-text text-sm max-w-2xl">
+        Director, you are authorizing the active roster for this containment cycle. Select <strong class="text-amber-400">3 Principals</strong> and <strong class="text-red-400">3 Anomalies</strong> from the candidates below. All designations are codename-only at this clearance level. Full dossiers pending operational authorization.
+      </p>
+    </div>
+
+    <!-- Tabs -->
+    <div class="flex gap-0 border-b border-base-300 mb-6">
+      <button class="tab-btn active-principal" onclick="switchTab('principals', this)">
+        ▸ PRINCIPALS <span id="p-tab-count" class="ml-2 text-xs">[0/3]</span>
+      </button>
+      <button class="tab-btn" onclick="switchTab('anomalies', this)">
+        ▸ ANOMALIES <span id="a-tab-count" class="ml-2 text-xs">[0/3]</span>
+      </button>
+    </div>
+
+    <!-- PRINCIPALS PANE -->
+    <div id="pane-principals" class="pane visible">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div>
+          <div class="section-label">personnel roster — select 3</div>
+          <div class="doc-id mt-1">Principals are the human agents of this containment cycle. They carry capability — and consequence.</div>
+        </div>
+        <div id="p-count-badge" class="count-badge">SELECTED: 0 / 3</div>
+      </div>
+
+      <div class="grid-principals" id="principal-grid">
+
+        <!-- P-01: ARCHIVIST -->
+        <div class="principal-card p-4" data-id="ARCHIVIST" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-01</div>
+              <div class="card-codename text-base-content">ARCHIVIST</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Obsessive record-keeper. Believes information is the only reliable weapon. Catalogs everything — anomaly behavior, personnel performance, Director decisions. Has a memory that borders on institutional.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Paralysis by analysis. Cannot act without complete data. Delays cost cycles.</div>
+        </div>
+
+        <!-- P-02: SHEPHERD -->
+        <div class="principal-card p-4" data-id="SHEPHERD" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-02</div>
+              <div class="card-codename text-base-content">SHEPHERD</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Charismatic people-keeper. Builds loyalty through catastrophe. Personnel morale improves measurably under their influence. Knows every researcher's name and what they fear.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Protects personnel over mission. Flinches at necessary sacrifice. Morale-first, results-second.</div>
+        </div>
+
+        <!-- P-03: CARTOGRAPHER -->
+        <div class="principal-card p-4" data-id="CARTOGRAPHER" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-03</div>
+              <div class="card-codename text-base-content">CARTOGRAPHER</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Sees structure in chaos. Brilliant lateral thinker who maps containment problems no one else thought to draw. First to propose novel protocols.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Pattern recognition bleeds into paranoia. Finds threats that don't exist. Hard to distinguish insight from noise.</div>
+        </div>
+
+        <!-- P-04: VIGIL -->
+        <div class="principal-card p-4" data-id="VIGIL" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-04</div>
+              <div class="card-codename text-base-content">VIGIL</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Ice-cold tactician. Makes hard calls without pause, without explanation, without regret. Results-driven to a degree that other Principals find disturbing.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Treats personnel as expendable. Callousness causes silent attrition — people leave, quit, break without warning.</div>
+        </div>
+
+        <!-- P-05: TESTAMENT -->
+        <div class="principal-card p-4" data-id="TESTAMENT" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-05</div>
+              <div class="card-codename text-base-content">TESTAMENT</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Former ethicist. Chose containment as the lesser evil. Keeps the Foundation from forgetting what it costs to be human. Pushes back on Director decisions that cross the line.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Moral hesitation at critical moments. Stalls decisions requiring urgency. The line they won't cross may be exactly the line you need to cross.</div>
+        </div>
+
+        <!-- P-06: HOLLOW -->
+        <div class="principal-card p-4" data-id="HOLLOW" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-06</div>
+              <div class="card-codename text-base-content">HOLLOW</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Anomaly survivor. Unique behavioral insight into containment subjects that no trained researcher can replicate. Something was changed by what they went through. They don't deny it.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Psychological instability. Unreliable under sustained pressure. Exposure may still be ongoing.</div>
+        </div>
+
+        <!-- P-07: MERIDIAN -->
+        <div class="principal-card p-4" data-id="MERIDIAN" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-07</div>
+              <div class="card-codename text-base-content">MERIDIAN</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Logistics engine. Keeps funding flowing, supply chains intact, personnel rosters full. Without Meridian, operations run dry. With them, you rarely worry about budget.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Severe risk aversion. Blocks experimental protocols. Won't approve anything with uncertain return. Budget safety over results.</div>
+        </div>
+
+        <!-- P-08: CASKET -->
+        <div class="principal-card p-4" data-id="CASKET" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-08</div>
+              <div class="card-codename text-base-content">CASKET</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Security lead. Containment enforcement specialist. Executes breach response, threat neutralization, and personnel control with the minimum of ceremony.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Escalation bias. Force is the first and only option. Situations that require negotiation or restraint tend to get worse.</div>
+        </div>
+
+        <!-- P-09: ORACLE -->
+        <div class="principal-card p-4" data-id="ORACLE" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-09</div>
+              <div class="card-codename text-base-content">ORACLE</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Predictive analyst. Runs probability models on anomaly behavior, personnel performance, and Director decision trees. Has been right when it mattered most.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Communicates in likelihoods, not decisions. Refuses to make calls without sufficient confidence intervals. Analysis without action.</div>
+        </div>
+
+        <!-- P-10: SIGNAL -->
+        <div class="principal-card p-4" data-id="SIGNAL" onclick="toggle(this, 'principal')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number">P-10</div>
+              <div class="card-codename text-base-content">SIGNAL</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Narrative control. Manages communications, public-facing interfaces, and interagency reporting. Makes the Foundation look like exactly what it needs to look like, when it needs to.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Prioritizes the story over the truth. Will misrepresent outcomes that should be accurately reported. The cover can become the crisis.</div>
+        </div>
+
+      </div><!-- /grid-principals -->
+
+      <div class="submit-zone p-4 mt-6 flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <div class="section-label">principal selection</div>
+          <div id="p-selection-preview" class="text-sm text-base-content/60 mt-1 font-mono">No principals selected.</div>
+        </div>
+        <button class="btn btn-outline submit-btn" id="submit-principals" onclick="submitPrincipals()" disabled>
+          AUTHORIZE PRINCIPALS →
+        </button>
+      </div>
+    </div><!-- /pane-principals -->
+
+    <!-- ANOMALIES PANE -->
+    <div id="pane-anomalies" class="pane">
+      <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+        <div>
+          <div class="section-label">active containment subjects — select 3</div>
+          <div class="doc-id mt-1">Anomalies define the threats this cycle. Their nature shapes every decision you make.</div>
+        </div>
+        <div id="a-count-badge" class="count-badge anomaly-count">SELECTED: 0 / 3</div>
+      </div>
+
+      <div class="grid-anomalies" id="anomaly-grid">
+
+        <!-- A-01: WARDEN -->
+        <div class="anomaly-card p-4" data-id="WARDEN" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-01</div>
+              <div class="card-codename text-base-content">WARDEN</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Manifests as a senior Foundation official. Indistinguishable from legitimate authority. Psychically rewrites the organizational memories of personnel who report to it. The one already inside.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Requires proximity to active Foundation hierarchy. Loses influence when isolated from institutional structure.</div>
+        </div>
+
+        <!-- A-02: ECHO CHAMBER -->
+        <div class="anomaly-card p-4" data-id="ECHO CHAMBER" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-02</div>
+              <div class="card-codename text-base-content">ECHO CHAMBER</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            A room. Replays past events from within the facility — but altered. Each replay shifts what personnel believe happened. Corrupts institutional memory over time. You can't destroy a thing that lives in minds.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Stationary. Influence is proximity-dependent. Personnel who have never entered are unaffected.</div>
+        </div>
+
+        <!-- A-03: PALE CARTOGRAPHY -->
+        <div class="anomaly-card p-4" data-id="PALE CARTOGRAPHY" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-03</div>
+              <div class="card-codename text-base-content">PALE CARTOGRAPHY</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            A map that is always accurate to future events. Possessing it provides perfect foresight. Studying it long enough removes the will to act — if you know what happens, you stop believing choices matter.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Requires sustained study to exert influence. Brief exposure is non-hazardous. Controlled access limits exposure window.</div>
+        </div>
+
+        <!-- A-04: THE INTERVIEW -->
+        <div class="anomaly-card p-4" data-id="THE INTERVIEW" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-04</div>
+              <div class="card-codename text-base-content">THE INTERVIEW</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            An entity that presents as a necessary conversation. Every subject who encounters it believes they must speak to it — urgently, privately, now. The conversation never concludes. Subjects do not return.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Cannot initiate contact. Must be sought. Removing the perception of necessity breaks the compulsion cycle.</div>
+        </div>
+
+        <!-- A-05: SEVERANCE -->
+        <div class="anomaly-card p-4" data-id="SEVERANCE" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-05</div>
+              <div class="card-codename text-base-content">SEVERANCE</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Memetic pathogen. Spreads through shared documents, briefings, and interagency communications. Infected subjects experience progressive erosion of institutional loyalty. Begin acting in self-interest only.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Slow progression. Early infection is reversible. Detection windows exist before behavioral shift is complete.</div>
+        </div>
+
+        <!-- A-06: UNCONFIRMED -->
+        <div class="anomaly-card p-4" data-id="UNCONFIRMED" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-06</div>
+              <div class="card-codename text-base-content">UNCONFIRMED</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            An anomaly no researcher can agree on. Every report describes something different. Containment logs are internally inconsistent. There is no consensus on what it is, what it wants, or if it is one thing at all.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Cannot be targeted directly. Containment protocols built around any single theory will fail. Inconsistency is the only consistent fact.</div>
+        </div>
+
+        <!-- A-07: LITURGY -->
+        <div class="anomaly-card p-4" data-id="LITURGY" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-07</div>
+              <div class="card-codename text-base-content">LITURGY</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            A ritual text that compels reading and belief. Readers experience it as meaningful, authoritative, and personally relevant. Compliance follows. The purpose served is not the Foundation's.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Physical medium dependency. Destruction of source copies disrupts spread. Non-literate personnel are unaffected.</div>
+        </div>
+
+        <!-- A-08: HOLLOW KING -->
+        <div class="anomaly-card p-4" data-id="HOLLOW KING" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-08</div>
+              <div class="card-codename text-base-content">HOLLOW KING</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Humanoid entity with no fixed appearance. Mirrors the authority figures that personnel trust most. Over time, institutional perception shifts — personnel stop recognizing the original and respond only to the copy.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Requires a target to mirror. Rotating authority structures disrupts the mirroring cycle. Confusion is its enemy.</div>
+        </div>
+
+        <!-- A-09: THE LAST RECORD -->
+        <div class="anomaly-card p-4" data-id="THE LAST RECORD" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-09</div>
+              <div class="card-codename text-base-content">THE LAST RECORD</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            A file documenting the internal collapse of a previous Foundation iteration. Reading it is believed to create the conditions it describes. Every Foundation that has studied it has followed the same sequence of failures.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Passive. Requires voluntary engagement. Personnel who know not to read it are unaffected. The challenge is that it always seems important to read.</div>
+        </div>
+
+        <!-- A-10: NIGHTWATCH -->
+        <div class="anomaly-card p-4" data-id="NIGHTWATCH" onclick="toggle(this, 'anomaly')">
+          <div class="flex justify-between items-start mb-2">
+            <div>
+              <div class="principal-number" style="color:#5a3a3a;">A-10</div>
+              <div class="card-codename text-base-content">NIGHTWATCH</div>
+            </div>
+            <div class="select-indicator">✓</div>
+          </div>
+          <p class="personality-text mb-3">
+            Passive surveillance entity. Does nothing. Observes everything. It has been watching for [REDACTED] and no action has ever been confirmed. What it is waiting for, and what it will do when it finds it, is unknown.
+          </p>
+          <div class="weakness-tag">WEAKNESS: Has never demonstrated active hostility. Containment is precautionary. The risk is entirely in the unknown unknown.</div>
+        </div>
+
+      </div><!-- /grid-anomalies -->
+
+      <div class="submit-zone p-4 mt-6 flex justify-between items-center flex-wrap gap-3">
+        <div>
+          <div class="section-label">anomaly selection</div>
+          <div id="a-selection-preview" class="text-sm text-base-content/60 mt-1 font-mono">No anomalies selected.</div>
+        </div>
+        <button class="btn btn-outline submit-btn" style="border-color:#8b2c2c; color:#e05252;" id="submit-anomalies" onclick="submitAnomalies()" disabled>
+          AUTHORIZE ANOMALIES →
+        </button>
+      </div>
+    </div><!-- /pane-anomalies -->
+
+    <!-- Footer -->
+    <div class="mt-8 pt-4 border-t border-base-300 flex justify-between items-center flex-wrap gap-2">
+      <div class="doc-id">THE PROTOCOL // MVP DATA SELECTION // CYCLE 0000</div>
+      <button class="btn btn-sm btn-ghost submit-btn text-xs" onclick="submitAll()">
+        SUBMIT BOTH SELECTIONS →
+      </button>
+    </div>
+  </div>
+
+  <script>
+    const MAX = 3;
+    let selectedPrincipals = new Set();
+    let selectedAnomalies = new Set();
+
+    function toggle(card, type) {
+      const id = card.dataset.id;
+      const set = type === 'principal' ? selectedPrincipals : selectedAnomalies;
+
+      if (set.has(id)) {
+        set.delete(id);
+        card.classList.remove('selected');
+      } else {
+        if (set.size >= MAX) return;
+        set.add(id);
+        card.classList.add('selected');
+      }
+
+      updateCounts();
+    }
+
+    function updateCounts() {
+      const pc = selectedPrincipals.size;
+      const ac = selectedAnomalies.size;
+
+      document.getElementById('p-count-badge').textContent = `SELECTED: ${pc} / ${MAX}`;
+      document.getElementById('p-tab-count').textContent = `[${pc}/${MAX}]`;
+      document.getElementById('a-count-badge').textContent = `SELECTED: ${ac} / ${MAX}`;
+      document.getElementById('a-tab-count').textContent = `[${ac}/${MAX}]`;
+
+      const pb = document.getElementById('p-count-badge');
+      pb.classList.toggle('maxed', pc === MAX);
+
+      const ab = document.getElementById('a-count-badge');
+      ab.classList.toggle('maxed', ac === MAX);
+
+      const pp = document.getElementById('p-selection-preview');
+      pp.textContent = pc === 0
+        ? 'No principals selected.'
+        : 'Selected: ' + [...selectedPrincipals].join(' · ');
+
+      const ap = document.getElementById('a-selection-preview');
+      ap.textContent = ac === 0
+        ? 'No anomalies selected.'
+        : 'Selected: ' + [...selectedAnomalies].join(' · ');
+
+      document.getElementById('submit-principals').disabled = pc === 0;
+      document.getElementById('submit-anomalies').disabled = ac === 0;
+    }
+
+    function switchTab(tab, btn) {
+      document.querySelectorAll('.pane').forEach(p => p.classList.remove('visible'));
+      document.getElementById('pane-' + tab).classList.add('visible');
+      document.querySelectorAll('.tab-btn').forEach(b => {
+        b.classList.remove('active-principal', 'active-anomaly');
+      });
+      btn.classList.add(tab === 'principals' ? 'active-principal' : 'active-anomaly');
+    }
+
+    function submitPrincipals() {
+      const list = [...selectedPrincipals];
+      if (list.length === 0) return;
+      const msg = `My chosen principals are: ${list.join(', ')}. Please confirm these 3 picks and move forward with them for the MVP.`;
+      window.lavish?.queuePrompt(msg, {
+        tag: 'principal-selection',
+        text: 'Principals: ' + list.join(', '),
+        data: { question: 'principals', answer: list }
+      });
+    }
+
+    function submitAnomalies() {
+      const list = [...selectedAnomalies];
+      if (list.length === 0) return;
+      const msg = `My chosen anomalies are: ${list.join(', ')}. Please confirm these 3 picks and move forward with them for the MVP.`;
+      window.lavish?.queuePrompt(msg, {
+        tag: 'anomaly-selection',
+        text: 'Anomalies: ' + list.join(', '),
+        data: { question: 'anomalies', answer: list }
+      });
+    }
+
+    function submitAll() {
+      const pl = [...selectedPrincipals];
+      const al = [...selectedAnomalies];
+      if (pl.length === 0 && al.length === 0) return;
+
+      let parts = [];
+      if (pl.length > 0) parts.push(`Principals: ${pl.join(', ')}`);
+      if (al.length > 0) parts.push(`Anomalies: ${al.join(', ')}`);
+
+      const msg = `My MVP selections are — ${parts.join(' | ')}. Please lock these in and proceed.`;
+      window.lavish?.queuePrompt(msg, {
+        tag: 'full-selection',
+        text: parts.join(' | '),
+        data: { principals: pl, anomalies: al }
+      });
+      window.lavish?.sendQueuedPrompts();
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,114 @@
+# The Protocol — Architecture Plan
+
+## What We're Building
+
+A round-based, text-and-ASCII-art-driven strategy game set inside a clandestine anomaly containment foundation. The player is the Director. Every round a new anomaly arrives and demands three decisions: assign a Lead Scientist, select an experiment, choose a containment method.
+
+**Core feeling:** you are always trading human cost for institutional power. Resources are tracked but deliberately hidden — the player infers state from environmental signals, not numbers.
+
+**Core loop:** Anomaly → Assign Scientist → Select Experiment → Select Containment → Resolution → Incident Report → Repeat
+
+**Release target:** Steam (PC/Mac/Linux), solo indie, single-player.
+
+---
+
+## Locked Decisions
+
+### Stack
+- **Language/Framework:** Python + Textual (TUI framework by Textualize)
+- **Dev model:** Solo developer + Claude as co-author (content, code, and testing)
+- **Terminal style:** Simulated — Textual's CSS-like styling mimics a terminal aesthetic. Not a real OS terminal window. Allows rich color effects.
+- **Steam distribution:** `steamworks.py` + PyInstaller for binary bundling
+- **Toolchain:** Astral stack — `uv` (package manager), `ruff` (linter/formatter), `ty` (type checker)
+
+### Content Design
+- **Anomalies:** Fully hand-crafted. Each one is the star of the show — expensive to make, worth it.
+- **MVP scope:** 3 scientists · 6 anomalies · 15 experiments · 3 endings
+  - 3 scientist signature experiments (one per scientist, usable on any anomaly)
+  - 12 anomaly-specific experiments (2 per anomaly)
+  - Per round: player chooses from 3 experiments (1 scientist + 2 anomaly-specific)
+- **Anomaly distribution (MVP):** 2 SAFE · 3 EUCLID · 1 KETER (KETER appears in rounds 5–6)
+
+### Run Structure
+- **Roguelike:** Fresh run each time. Anomalies drawn from the hand-crafted pool in shuffled order. Each run is a complete arc. Replayability comes from variable ordering and different scientist assignments.
+
+### Scientist Lifecycle — All Three Fates
+Scientists can experience all three outcomes depending on anomaly type and outcome rolls:
+- **Death:** Removed from roster permanently. Art slot goes dark. Their color disappears from the log forever.
+- **Transformation:** Scientist becomes something else — a new anomaly entry or resource. Used sparingly for specific anomaly types. Each scientist has an optional `transforms_into` field pointing to an anomaly ID.
+- **Incapacitation:** Unavailable for N rounds. Art shows damage states. Most common bad outcome.
+
+Art integrity thresholds: 100–70 → intact · 69–35 → damaged · 34–1 → corrupted · 0 → absent
+
+### Outcome Model
+**Probabilistic with hidden humanity modifier.**
+
+Outcomes roll dice (0–100) modified by scientist skill, experiment risk offset, tech level bonus, and a hidden humanity penalty. The player sees qualitative risk signals ("HIGH RISK") but never the numbers. Low-humanity runs "feel" harder without showing a penalty.
+
+Formula:
+```
+final = roll + scientist_skill_bonus + experiment.roll.modifier + tech_bonus - humanity_penalty
+success = final >= experiment.roll.base_difficulty
+```
+
+Only `success = True/False` is shown. Narrative text describes how close it felt.
+
+### Endings — Three
+| Ending | Trigger | Tone |
+|--------|---------|------|
+| **Containment Failure** | `anomaly_pressure >= 100` | Catastrophic. The last report is filed by no one. |
+| **Transformation** | `humanity <= 0` | Darkest. The Director becomes an anomaly. Final screen is your own anomaly file in clinical third person. |
+| **Full Containment** | All anomalies resolved, pressure < 100, humanity > 0 | Hollow "win." Accumulated cost of every decision laid bare. |
+
+### Screen Layout
+**Single scrollable log.** The entire game is one main screen — a continuous terminal log. ASCII art appears inline when you interact with something (select a scientist, encounter an anomaly). Completed rounds stay visible in scroll history. The accumulated history IS the game's atmosphere.
+
+### Audio
+Deferred. Not in MVP. When revisited: `pygame.mixer` as an isolated background thread. Game works without it if it fails.
+
+---
+
+## Key Systems
+
+### Hidden Resource Tracker
+Four hidden ledger values — never shown as raw numbers:
+
+| Resource | Signal when low/high |
+|----------|---------------------|
+| **Humanity (0–100)** | Reports become clinical, names replaced with IDs. Increases hidden roll penalty. |
+| **Tech Level (0–100)** | New experiment options unlock. Descriptions hint at "harvested" knowledge. |
+| **Active Personnel** | Fewer scientists available. Art shows corruption. |
+| **Anomaly Pressure (0–100)** | Anomalies arrive faster, descriptions grow more urgent. End condition at 100. |
+
+The `GameState` class enforces this via encapsulation — humanity is never returned as a raw integer. Only derived signals like `is_humanity_critical()` or `get_tone_modifier()` are public.
+
+### Narrative Engine
+Text generated by filling templates with runtime state. Each scientist has a `tone` enum (CLINICAL, RECKLESS, RESIGNED, PARANOID) that selects from different template banks. Templates stored in TOML, rendered via `str.format_map(context)`.
+
+Narrative pool selection: **no-repeat shuffle queue** — pool shuffled at run start, lines drawn in order, reshuffled when exhausted.
+
+### ASCII Art System
+Each scientist and anomaly has multi-line ASCII art stored as `.txt` files, co-located with their entity data (e.g., `data/scientists/morrow/intact.txt`). All art and text attributed to a scientist is tinted in their unique hex color (both art panel and log text).
+
+---
+
+## Steam Release Checklist
+
+**Required:**
+- Steamworks SDK integration (`steamworks.py`)
+- Steam achievements (at least 10)
+- Cloud saves (Steam Cloud sync)
+- Windows + Linux/Mac builds
+- Steam Deck compatibility (D-pad → tab/arrow keys via Steam Input)
+- Basic controller input
+
+**Recommended post-MVP:**
+- Steam Workshop (moddable TOML content)
+- Trading cards (ASCII art → card art)
+- Soundtrack DLC
+
+---
+
+## Open Questions (None Remaining for MVP)
+
+All architecture decisions resolved. See `02-technical.md` for implementation details.

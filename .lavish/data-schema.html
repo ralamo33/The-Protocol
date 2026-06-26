@@ -1,0 +1,551 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="luxury">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Protocol — Data Schema Plan</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { background: '#0d0d0d', primaryColor: '#1a1a2e', primaryTextColor: '#c8a96e', lineColor: '#4a4a6a', edgeLabelBackground: '#1a1a1a', fontSize: '13px' } });</script>
+  <style type="text/css">
+    .field-row { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.6fr) minmax(0, 2fr); gap: 0.5rem; align-items: start; padding: 0.4rem 0; border-bottom: 1px solid rgba(200,169,110,0.1); }
+    .field-row:last-child { border-bottom: none; }
+    .entity-color-sci { border-left: 3px solid #06b6d4; }
+    .entity-color-anomaly { border-left: 3px solid #ef4444; }
+    .entity-color-exp { border-left: 3px solid #a855f7; }
+    .entity-color-contain { border-left: 3px solid #22c55e; }
+    .entity-color-ledger { border-left: 3px solid #f59e0b; }
+    .impact-tag { display: inline-block; font-size: 0.65rem; padding: 0.1rem 0.4rem; border-radius: 99px; font-weight: 600; letter-spacing: 0.04em; white-space: nowrap; }
+    .impact-roll { background: rgba(168,85,247,0.2); color: #d8b4fe; }
+    .impact-narrative { background: rgba(6,182,212,0.2); color: #67e8f9; }
+    .impact-visual { background: rgba(34,197,94,0.2); color: #86efac; }
+    .impact-gate { background: rgba(245,158,11,0.2); color: #fcd34d; }
+    .impact-ending { background: rgba(239,68,68,0.2); color: #fca5a5; }
+    .impact-pacing { background: rgba(99,102,241,0.2); color: #a5b4fc; }
+    .option-card { border: 1px solid rgba(200,169,110,0.2); border-radius: 0.5rem; overflow: hidden; }
+    .option-header { background: rgba(200,169,110,0.08); padding: 0.75rem 1rem; display: flex; align-items: center; gap: 0.75rem; }
+    .option-body { padding: 1rem; }
+    .option-compare { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 0.75rem; }
+    @media (max-width: 640px) { .option-compare { grid-template-columns: 1fr; } }
+    .option-side { border-radius: 0.375rem; padding: 0.75rem; }
+    .option-side h4 { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 0.5rem; }
+    .option-a { background: rgba(6,182,212,0.08); border: 1px solid rgba(6,182,212,0.2); }
+    .option-a h4 { color: #06b6d4; }
+    .option-b { background: rgba(239,68,68,0.08); border: 1px solid rgba(239,68,68,0.2); }
+    .option-b h4 { color: #ef4444; }
+    .option-rec { background: rgba(34,197,94,0.08); border: 1px solid rgba(34,197,94,0.2); padding: 0.5rem 0.75rem; border-radius: 0.375rem; font-size: 0.8rem; margin-top: 0.75rem; color: #86efac; }
+    .mermaid { width: 100%; overflow-x: auto; }
+    .entity-tabs input[type="radio"] { display: none; }
+    .tab-content { display: none; }
+    #tab-sci:checked ~ #content-sci,
+    #tab-anomaly:checked ~ #content-anomaly,
+    #tab-exp:checked ~ #content-exp,
+    #tab-contain:checked ~ #content-contain,
+    #tab-ledger:checked ~ #content-ledger { display: block; }
+    .tab-label { cursor: pointer; padding: 0.5rem 1rem; border-bottom: 2px solid transparent; font-size: 0.85rem; font-weight: 600; letter-spacing: 0.04em; transition: color 0.15s; }
+    #tab-sci:checked ~ .tab-labels label[for="tab-sci"],
+    #tab-anomaly:checked ~ .tab-labels label[for="tab-anomaly"],
+    #tab-exp:checked ~ .tab-labels label[for="tab-exp"],
+    #tab-contain:checked ~ .tab-labels label[for="tab-contain"],
+    #tab-ledger:checked ~ .tab-labels label[for="tab-ledger"] { border-color: #c8a96e; color: #c8a96e; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content">
+  <div class="max-w-5xl mx-auto px-4 py-10">
+
+    <!-- Header -->
+    <div class="mb-10">
+      <div class="flex items-center gap-3 mb-2">
+        <span class="badge badge-outline badge-sm" style="color:#c8a96e;border-color:#c8a96e;">DATA SCHEMA PLAN</span>
+        <span class="badge badge-outline badge-sm opacity-50">MVP SCOPE</span>
+      </div>
+      <h1 class="text-3xl font-bold mb-1" style="color:#c8a96e; font-family: monospace; letter-spacing: 0.05em;">THE PROTOCOL</h1>
+      <p class="text-base-content/60 text-sm max-w-2xl">
+        Every field in this schema either drives a game mechanic, shapes a narrative signal, or unlocks content.
+        This plan maps what we track → why it exists → how the player feels it.
+      </p>
+    </div>
+
+    <!-- Entity Relationship Diagram -->
+    <section class="mb-12">
+      <h2 class="text-sm font-bold uppercase tracking-widest mb-1" style="color:#c8a96e;">Entity Relationships</h2>
+      <p class="text-xs text-base-content/50 mb-4">How the five core data entities connect at runtime.</p>
+      <div class="bg-base-200 rounded-box p-4" style="border:1px solid rgba(200,169,110,0.15);">
+        <div class="mermaid">
+erDiagram
+    SCIENTIST {
+        string id
+        int containment_skill
+        int research_skill
+        int risk_tolerance
+        int integrity
+        string status
+        string tone
+        string color
+        string transforms_into
+    }
+    ANOMALY {
+        string id
+        string classification
+        int threat_level
+        int base_pressure_per_round
+        int max_rounds
+        float personnel_risk
+        int humanity_cost_range
+        int tech_gain_range
+    }
+    EXPERIMENT {
+        string id
+        string risk_level
+        int base_difficulty
+        int roll_modifier
+        int requires_tech
+        int humanity_delta_success
+        int tech_delta_success
+        int pressure_delta_success
+        int humanity_delta_failure
+        int pressure_delta_failure
+    }
+    CONTAINMENT {
+        string id
+        int requires_tech
+        string requires_experiment
+        int pressure_resolve
+        int humanity_delta
+        int tech_cost
+    }
+    GAME_STATE {
+        int humanity
+        int tech_level
+        int anomaly_pressure
+        int round
+        string run_id
+    }
+    ANOMALY ||--o{ EXPERIMENT : "has 2 specific"
+    SCIENTIST ||--o| EXPERIMENT : "has 1 signature"
+    ANOMALY ||--o{ CONTAINMENT : "has methods"
+    CONTAINMENT }o--o| EXPERIMENT : "may require"
+    GAME_STATE ||--o{ SCIENTIST : "tracks all"
+    GAME_STATE }o--|| ANOMALY : "current anomaly"
+    ANOMALY }o--o| SCIENTIST : "can transform into"
+        </div>
+      </div>
+    </section>
+
+    <!-- Entity Deep Dive: Tab UI -->
+    <section class="mb-12">
+      <h2 class="text-sm font-bold uppercase tracking-widest mb-1" style="color:#c8a96e;">Entity Field Reference</h2>
+      <p class="text-xs text-base-content/50 mb-4">Each field, its type, and what it makes the player feel.</p>
+
+      <div class="entity-tabs">
+        <input type="radio" id="tab-sci" name="entity-tab" checked />
+        <input type="radio" id="tab-anomaly" name="entity-tab" />
+        <input type="radio" id="tab-exp" name="entity-tab" />
+        <input type="radio" id="tab-contain" name="entity-tab" />
+        <input type="radio" id="tab-ledger" name="entity-tab" />
+
+        <div class="tab-labels flex flex-wrap gap-1 border-b mb-4" style="border-color:rgba(200,169,110,0.15);">
+          <label for="tab-sci" class="tab-label" style="color:#06b6d4;">Scientist</label>
+          <label for="tab-anomaly" class="tab-label" style="color:#ef4444;">Anomaly</label>
+          <label for="tab-exp" class="tab-label" style="color:#a855f7;">Experiment</label>
+          <label for="tab-contain" class="tab-label" style="color:#22c55e;">Containment</label>
+          <label for="tab-ledger" class="tab-label" style="color:#f59e0b;">Ledger</label>
+        </div>
+
+        <!-- Scientist -->
+        <div id="content-sci" class="tab-content">
+          <div class="card entity-color-sci bg-base-200 rounded-box p-5">
+            <div class="grid grid-cols-1 gap-0">
+              <div class="field-row text-xs font-bold text-base-content/40 uppercase tracking-widest pb-2">
+                <span>Field</span><span>Type</span><span>Gameplay Impact</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">containment_skill</code>
+                <span class="text-xs text-base-content/50">int 1–10</span>
+                <span><span class="impact-tag impact-roll">roll</span> Adds <code>skill × 2</code> to resolution roll. High containment = higher success chance on dangerous experiments.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">research_skill</code>
+                <span class="text-xs text-base-content/50">int 1–10</span>
+                <span><span class="impact-tag impact-gate">gate</span> Unlocks additional experiment flavor text and analysis lines in the log. Potential future: unlocks extra intel on anomaly.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">risk_tolerance</code>
+                <span class="text-xs text-base-content/50">int 1–10</span>
+                <span><span class="impact-tag impact-roll">roll</span> Bonus to roll on HIGH-risk experiments specifically. The reckless scientist shines in desperate situations.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">integrity</code>
+                <span class="text-xs text-base-content/50">int 0–100</span>
+                <span><span class="impact-tag impact-visual">visual</span><span class="impact-tag impact-ending ml-1">ending</span> Drives art state (intact/damaged/corrupted/absent). At 0 → scientist is removed. Accumulates from bad outcomes.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">status</code>
+                <span class="text-xs text-base-content/50">enum</span>
+                <span><span class="impact-tag impact-gate">gate</span> ACTIVE | INCAPACITATED | TRANSFORMED | DEAD. INCAPACITATED locks the scientist for N rounds. Reduces available choices.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">tone</code>
+                <span class="text-xs text-base-content/50">enum</span>
+                <span><span class="impact-tag impact-narrative">narrative</span> CLINICAL | RECKLESS | RESIGNED | PARANOID. Selects which voice template bank to pull from for all log text attributed to this scientist.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">color</code>
+                <span class="text-xs text-base-content/50">hex string</span>
+                <span><span class="impact-tag impact-visual">visual</span><span class="impact-tag impact-narrative ml-1">narrative</span> Tints ALL log text and ASCII art attributed to this scientist. When they die, their color vanishes from history permanently.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-cyan-400">transforms_into</code>
+                <span class="text-xs text-base-content/50">anomaly id | null</span>
+                <span><span class="impact-tag impact-narrative">narrative</span><span class="impact-tag impact-gate ml-1">gate</span> Optional. If set and fate roll triggers TRANSFORM, injects this anomaly ID into the queue as the next anomaly.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Anomaly -->
+        <div id="content-anomaly" class="tab-content">
+          <div class="card entity-color-anomaly bg-base-200 rounded-box p-5">
+            <div class="grid grid-cols-1 gap-0">
+              <div class="field-row text-xs font-bold text-base-content/40 uppercase tracking-widest pb-2">
+                <span>Field</span><span>Type</span><span>Gameplay Impact</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">classification</code>
+                <span class="text-xs text-base-content/50">SAFE|EUCLID|KETER</span>
+                <span><span class="impact-tag impact-narrative">narrative</span><span class="impact-tag impact-pacing ml-1">pacing</span> Shown to player in the briefing. KETER only appears rounds 5–6. Sets atmospheric dread without directly capping mechanics.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">threat_level</code>
+                <span class="text-xs text-base-content/50">int 1–5</span>
+                <span><span class="impact-tag impact-roll">roll</span> Could be used to add a direct difficulty modifier on experiment rolls. Currently implicit in the experiment data — open design choice.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">base_pressure_per_round</code>
+                <span class="text-xs text-base-content/50">int</span>
+                <span><span class="impact-tag impact-pacing">pacing</span> How much global pressure ticks up each round this anomaly is unresolved. Higher = more urgent. KETER anomalies should be high.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">max_rounds</code>
+                <span class="text-xs text-base-content/50">int</span>
+                <span><span class="impact-tag impact-ending">ending</span> Forced failure if the anomaly isn't resolved within this many rounds. Creates real time pressure on the player.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">personnel_risk</code>
+                <span class="text-xs text-base-content/50">float 0–1</span>
+                <span><span class="impact-tag impact-roll">roll</span> On experiment failure, probability that a personnel incident is triggered (fate roll: death/transform/incapacitate).</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">humanity_cost_range</code>
+                <span class="text-xs text-base-content/50">[min, max]</span>
+                <span><span class="impact-tag impact-narrative">narrative</span><span class="impact-tag impact-ending ml-1">ending</span> Hidden. Every anomaly interaction costs humanity. Range adds variance so player can't predict exact erosion. Low humanity = darker narrative tone + roll penalty.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-red-400">tech_gain_range</code>
+                <span class="text-xs text-base-content/50">[min, max]</span>
+                <span><span class="impact-tag impact-gate">gate</span> On success, gain tech from studying the anomaly. Tech unlocks advanced experiments and containment. Incentivizes risky study.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Experiment -->
+        <div id="content-exp" class="tab-content">
+          <div class="card entity-color-exp bg-base-200 rounded-box p-5">
+            <div class="grid grid-cols-1 gap-0">
+              <div class="field-row text-xs font-bold text-base-content/40 uppercase tracking-widest pb-2">
+                <span>Field</span><span>Type</span><span>Gameplay Impact</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">risk_level</code>
+                <span class="text-xs text-base-content/50">LOW|MED|HIGH</span>
+                <span><span class="impact-tag impact-narrative">narrative</span> The ONLY roll information shown to the player. Everything else is hidden. Player learns to read this signal over time.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">base_difficulty</code>
+                <span class="text-xs text-base-content/50">int 0–100</span>
+                <span><span class="impact-tag impact-roll">roll</span> Hidden. The floor the final roll must beat to succeed. Designer's primary tool for tuning experiment odds.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">roll_modifier</code>
+                <span class="text-xs text-base-content/50">int ±</span>
+                <span><span class="impact-tag impact-roll">roll</span> Hidden. Added to the rolled value. Negative = punishing even with good scientists. Positive = forgiving even with weak teams.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">requires_tech</code>
+                <span class="text-xs text-base-content/50">int</span>
+                <span><span class="impact-tag impact-gate">gate</span> Tech threshold to unlock this experiment. Creates a progression arc — start with blunt tools, earn precision over runs.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">humanity_delta (success)</code>
+                <span class="text-xs text-base-content/50">int (neg)</span>
+                <span><span class="impact-tag impact-narrative">narrative</span><span class="impact-tag impact-ending ml-1">ending</span> Hidden. Even success costs humanity. No ethical free lunch. Determines how fast the Transformation ending accelerates.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">tech_delta (success)</code>
+                <span class="text-xs text-base-content/50">int (pos)</span>
+                <span><span class="impact-tag impact-gate">gate</span> Tech gain on success. The reward that offsets the humanity cost — high-tech experiments unlock power but demand sacrifice.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">pressure_delta</code>
+                <span class="text-xs text-base-content/50">int (neg success, pos fail)</span>
+                <span><span class="impact-tag impact-pacing">pacing</span><span class="impact-tag impact-ending ml-1">ending</span> Success reduces pressure; failure increases it. Primary pacing lever. Failure cascades make pressure spiral.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-purple-400">personnel_status (fail)</code>
+                <span class="text-xs text-base-content/50">SAFE|INCIDENT</span>
+                <span><span class="impact-tag impact-roll">roll</span> If INCIDENT, triggers a fate roll on the assigned scientist. Combined with anomaly's personnel_risk probability.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Containment -->
+        <div id="content-contain" class="tab-content">
+          <div class="card entity-color-contain bg-base-200 rounded-box p-5">
+            <div class="grid grid-cols-1 gap-0">
+              <div class="field-row text-xs font-bold text-base-content/40 uppercase tracking-widest pb-2">
+                <span>Field</span><span>Type</span><span>Gameplay Impact</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-green-400">requires_tech</code>
+                <span class="text-xs text-base-content/50">int</span>
+                <span><span class="impact-tag impact-gate">gate</span> Locks advanced containment behind tech investment. Cheaper options are always available but weaker on pressure reduction.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-green-400">requires_experiment</code>
+                <span class="text-xs text-base-content/50">experiment id | null</span>
+                <span><span class="impact-tag impact-gate">gate</span> The best containment for an anomaly requires first running the right experiment. Rewards methodical play — study before contain.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-green-400">pressure_resolve</code>
+                <span class="text-xs text-base-content/50">int (neg)</span>
+                <span><span class="impact-tag impact-pacing">pacing</span><span class="impact-tag impact-ending ml-1">ending</span> How much pressure this containment reduces. Standard = partial; best-in-class = fully resolves. Player tradeoff: get the good one or settle.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-green-400">humanity_delta</code>
+                <span class="text-xs text-base-content/50">int (neg)</span>
+                <span><span class="impact-tag impact-narrative">narrative</span><span class="impact-tag impact-ending ml-1">ending</span> Even containment costs. Some advanced methods cost more humanity than the experiment did. Dark tradeoff: contain well, lose yourself faster.</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-green-400">tech_cost</code>
+                <span class="text-xs text-base-content/50">int</span>
+                <span><span class="impact-tag impact-gate">gate</span> Some advanced containment spends accumulated tech. Spending tech on containment can block future experiment unlocks. Resource tension.</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Ledger -->
+        <div id="content-ledger" class="tab-content">
+          <div class="card entity-color-ledger bg-base-200 rounded-box p-5">
+            <p class="text-xs text-base-content/50 mb-4">The four ledger values are <strong style="color:#f59e0b;">never shown to the player as raw numbers.</strong> Only derived signals are public.</p>
+            <div class="grid grid-cols-1 gap-0">
+              <div class="field-row text-xs font-bold text-base-content/40 uppercase tracking-widest pb-2">
+                <span>Value</span><span>Range</span><span>Signal &amp; Ending Role</span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-yellow-400">humanity</code>
+                <span class="text-xs text-base-content/50">0–100</span>
+                <span>
+                  <span class="impact-tag impact-roll">roll</span><span class="impact-tag impact-narrative ml-1">narrative</span><span class="impact-tag impact-ending ml-1">ending</span>
+                  <span class="block mt-1 text-xs text-base-content/70">Drives roll penalty at low values. Narrative tone darkens (names → IDs, reports become clinical). At 0 → <strong style="color:#fca5a5;">Transformation ending</strong>. Signal: <code>is_humanity_critical()</code>, <code>get_tone_modifier()</code>, <code>get_roll_penalty()</code>.</span>
+                </span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-yellow-400">tech_level</code>
+                <span class="text-xs text-base-content/50">0–100</span>
+                <span>
+                  <span class="impact-tag impact-gate">gate</span><span class="impact-tag impact-roll ml-1">roll</span>
+                  <span class="block mt-1 text-xs text-base-content/70">Unlocks experiments and containment methods. Adds <code>tech_level ÷ 10</code> to roll. Signals: <code>get_tech_level()</code> used internally only. Player infers from newly available options.</span>
+                </span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-yellow-400">anomaly_pressure</code>
+                <span class="text-xs text-base-content/50">0–100</span>
+                <span>
+                  <span class="impact-tag impact-pacing">pacing</span><span class="impact-tag impact-narrative ml-1">narrative</span><span class="impact-tag impact-ending ml-1">ending</span>
+                  <span class="block mt-1 text-xs text-base-content/70">Ticks up each round (base_pressure_per_round) + on experiment failure. At 100 → <strong style="color:#fca5a5;">Containment Failure ending</strong>. Narrative urgency increases visibly. Signal: descriptions use more alarming language.</span>
+                </span>
+              </div>
+              <div class="field-row text-sm">
+                <code class="text-yellow-400">active_personnel</code>
+                <span class="text-xs text-base-content/50">derived count</span>
+                <span>
+                  <span class="impact-tag impact-gate">gate</span><span class="impact-tag impact-visual ml-1">visual</span>
+                  <span class="block mt-1 text-xs text-base-content/70">Not stored directly — derived from scientist statuses. Signal: fewer portrait slots in the selection UI, more "UNAVAILABLE" labels. Limits strategic options without showing a number.</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design Options Section -->
+    <section class="mb-12">
+      <h2 class="text-sm font-bold uppercase tracking-widest mb-1" style="color:#c8a96e;">Open Design Choices</h2>
+      <p class="text-xs text-base-content/50 mb-6">Four decisions not yet locked. Each has two concrete options with tradeoffs.</p>
+
+      <div class="flex flex-col gap-6">
+
+        <!-- Choice 1: Skill System -->
+        <div class="option-card">
+          <div class="option-header">
+            <span class="badge badge-sm" style="background:#1a1a2e;color:#c8a96e;border:1px solid #c8a96e;">CHOICE 01</span>
+            <span class="font-bold text-sm">Scientist Skill System Complexity</span>
+          </div>
+          <div class="option-body">
+            <p class="text-xs text-base-content/60 mb-3">How fine-grained should scientist skill data be? This determines how distinct scientists feel and how much player skill knowledge matters.</p>
+            <div class="option-compare">
+              <div class="option-side option-a">
+                <h4>Option A — Three Separate Skills</h4>
+                <p class="text-xs text-base-content/70 mb-2">As planned: <code>containment</code>, <code>research</code>, <code>risk_tolerance</code> each 1–10.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Each scientist feels mechanically distinct</li>
+                  <li>Roll formula uses containment + risk_tolerance separately</li>
+                  <li>Research skill needs a defined use or it's dead data</li>
+                  <li>More content to author per scientist</li>
+                </ul>
+              </div>
+              <div class="option-side option-b">
+                <h4>Option B — Single "Competence" Score</h4>
+                <p class="text-xs text-base-content/70 mb-2">One <code>competence</code> int 1–10, differentiated by tone and signature experiment only.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Simpler TOML, fewer dead fields</li>
+                  <li>Scientists feel more alike mechanically</li>
+                  <li>Tone + color do more narrative differentiation work</li>
+                  <li>Easier to balance with MVP scientist count of 3</li>
+                </ul>
+              </div>
+            </div>
+            <div class="option-rec">Lean: Keep Option A but give <code>research_skill</code> a clear purpose now (e.g. adds 1 narrative line per 3 pts) or cut it. Don't ship dead fields.</div>
+          </div>
+        </div>
+
+        <!-- Choice 2: Pressure Model -->
+        <div class="option-card">
+          <div class="option-header">
+            <span class="badge badge-sm" style="background:#1a1a2e;color:#c8a96e;border:1px solid #c8a96e;">CHOICE 02</span>
+            <span class="font-bold text-sm">Pressure: Global vs Per-Anomaly</span>
+          </div>
+          <div class="option-body">
+            <p class="text-xs text-base-content/60 mb-3">Does pressure exist as one global ledger value, or does each anomaly track its own pressure independently?</p>
+            <div class="option-compare">
+              <div class="option-side option-a">
+                <h4>Option A — Global Pressure (Current Plan)</h4>
+                <p class="text-xs text-base-content/70 mb-2">One <code>anomaly_pressure</code> int in GameState. All anomalies contribute to and drain from it.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Simpler — one number to manage</li>
+                  <li>Any anomaly resolution reduces total threat</li>
+                  <li>KETER anomalies create disproportionate spikes</li>
+                  <li>Past failures accumulate viscerally into one dread counter</li>
+                </ul>
+              </div>
+              <div class="option-side option-b">
+                <h4>Option B — Per-Anomaly Pressure</h4>
+                <p class="text-xs text-base-content/70 mb-2">Each anomaly has its own pressure counter. Global pressure = sum of all active anomaly pressures.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Richer model — you can see which anomaly is critical</li>
+                  <li>Enables "triage" gameplay (which do I contain first?)</li>
+                  <li>MVP only has 1 active anomaly at a time — moot until multi-anomaly</li>
+                  <li>More complex save state</li>
+                </ul>
+              </div>
+            </div>
+            <div class="option-rec">Keep Option A for MVP. Per-anomaly is only meaningful if multiple anomalies are active simultaneously — that's a post-MVP feature.</div>
+          </div>
+        </div>
+
+        <!-- Choice 3: Scientist Fate Granularity -->
+        <div class="option-card">
+          <div class="option-header">
+            <span class="badge badge-sm" style="background:#1a1a2e;color:#c8a96e;border:1px solid #c8a96e;">CHOICE 03</span>
+            <span class="font-bold text-sm">Scientist Fate Roll — How Many Outcomes?</span>
+          </div>
+          <div class="option-body">
+            <p class="text-xs text-base-content/60 mb-3">When an experiment failure triggers a personnel incident, how is the outcome determined?</p>
+            <div class="option-compare">
+              <div class="option-side option-a">
+                <h4>Option A — Flat Fate Table (Current Plan)</h4>
+                <p class="text-xs text-base-content/70 mb-2">Three possible fates: DEATH, INCAPACITATION, TRANSFORMATION. Each anomaly could weight these differently.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Simple to implement and balance</li>
+                  <li>Each fate has clear mechanical consequence</li>
+                  <li>Needs per-anomaly fate weight table to feel interesting</li>
+                  <li>3 scientists × 3 fates is enough story surface for MVP</li>
+                </ul>
+              </div>
+              <div class="option-side option-b">
+                <h4>Option B — Severity-Graduated Fate</h4>
+                <p class="text-xs text-base-content/70 mb-2">A 0–100 roll determines severity. Low roll = minor injury (–20 integrity). Mid = incapacitation. High = death/transform.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>More granular — partial damage feels less binary</li>
+                  <li>Adds another hidden number to track and tune</li>
+                  <li>Integrity already represents partial damage — overlap risk</li>
+                  <li>May soften dramatic scientist deaths if minor hits are common</li>
+                </ul>
+              </div>
+            </div>
+            <div class="option-rec">Option A. Integrity already handles gradual damage; flat fatal fates preserve dramatic weight. Don't dilute death with minor papercuts.</div>
+          </div>
+        </div>
+
+        <!-- Choice 4: Tech Level Visibility -->
+        <div class="option-card">
+          <div class="option-header">
+            <span class="badge badge-sm" style="background:#1a1a2e;color:#c8a96e;border:1px solid #c8a96e;">CHOICE 04</span>
+            <span class="font-bold text-sm">Tech Level — How is Progress Signaled?</span>
+          </div>
+          <div class="option-body">
+            <p class="text-xs text-base-content/60 mb-3">Tech level is hidden, but players need to understand that investment unlocks options. How do we signal progress?</p>
+            <div class="option-compare">
+              <div class="option-side option-a">
+                <h4>Option A — Unlock Notification in Log</h4>
+                <p class="text-xs text-base-content/70 mb-2">When tech crosses a threshold, a log line appears: <em>"RESEARCH ARCHIVE UPDATED. New protocols available."</em></p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>Clear, unambiguous signal to the player</li>
+                  <li>Fits the terminal-log aesthetic perfectly</li>
+                  <li>Risk: player treats it as a progress bar substitute</li>
+                  <li>Easy to implement — just compare tech before/after apply_outcome</li>
+                </ul>
+              </div>
+              <div class="option-side option-b">
+                <h4>Option B — Silent Discovery</h4>
+                <p class="text-xs text-base-content/70 mb-2">No notification. New experiments and containment simply appear in the next round's option list.</p>
+                <ul class="text-xs text-base-content/60 space-y-1 list-disc list-inside">
+                  <li>More mysterious — player discovers, doesn't receive</li>
+                  <li>Fits the "infer from environment" design ethos</li>
+                  <li>Risk: players miss unlocks and feel the list doesn't change</li>
+                  <li>Works better if new options have visually distinct presentation</li>
+                </ul>
+              </div>
+            </div>
+            <div class="option-rec">Option B with visual distinction — newly unlocked items get a brief highlight marker on first appearance. Discovery, not notification. Matches the game's hidden-state philosophy.</div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Legend -->
+    <section class="mb-8">
+      <h2 class="text-sm font-bold uppercase tracking-widest mb-3" style="color:#c8a96e;">Impact Tag Legend</h2>
+      <div class="flex flex-wrap gap-3">
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-roll">roll</span> Modifies the hidden resolution formula</div>
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-narrative">narrative</span> Shapes text tone, voice, or content selection</div>
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-visual">visual</span> Changes what the player sees on screen (art, color)</div>
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-gate">gate</span> Locks or unlocks options, experiments, or containment</div>
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-ending">ending</span> Contributes toward or triggers an ending condition</div>
+        <div class="flex items-center gap-2 text-xs"><span class="impact-tag impact-pacing">pacing</span> Affects urgency and tempo of the run</div>
+      </div>
+    </section>
+
+    <div class="text-xs text-base-content/30 text-center mt-12">
+      THE PROTOCOL · DATA SCHEMA PLAN · MVP SCOPE — 3 scientists · 6 anomalies · 15 experiments
+    </div>
+  </div>
+</body>
+</html>

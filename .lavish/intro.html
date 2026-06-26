@@ -1,0 +1,887 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE PROTOCOL — Project Intro</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+  :root {
+    --bg:        #080c0e;
+    --bg2:       #0d1418;
+    --bg3:       #111a1e;
+    --border:    #1e3040;
+    --dim:       #2a4050;
+    --muted:     #4a7080;
+    --text:      #8ab8c8;
+    --bright:    #c8e8f0;
+    --accent:    #06b6d4;
+    --accent2:   #0e7490;
+    --warn:      #d4a006;
+    --danger:    #c42b2b;
+    --green:     #2da44e;
+    --redacted:  #1a1a1a;
+
+    --morrow:    #06b6d4;
+    --vasquez:   #d97706;
+    --redacted-color: #7c3aed;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    min-height: 100vh;
+    padding: 0;
+    overflow-x: hidden;
+  }
+
+  /* SCANLINE OVERLAY */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(0,0,0,0.08) 2px,
+      rgba(0,0,0,0.08) 4px
+    );
+    pointer-events: none;
+    z-index: 1000;
+  }
+
+  .page {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 24px 20px 60px;
+  }
+
+  /* ─── BOOT HEADER ─── */
+  .boot-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 16px;
+    margin-bottom: 28px;
+  }
+
+  .boot-line {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.7;
+    letter-spacing: 0.04em;
+  }
+
+  .boot-line .ok    { color: var(--green); }
+  .boot-line .warn  { color: var(--warn); }
+  .boot-line .label { color: var(--dim); min-width: 200px; display: inline-block; }
+
+  /* ─── TITLE BLOCK ─── */
+  .title-block {
+    text-align: center;
+    margin-bottom: 36px;
+    position: relative;
+  }
+
+  .title-ascii {
+    font-family: 'VT323', monospace;
+    font-size: 64px;
+    letter-spacing: 0.15em;
+    color: var(--accent);
+    text-shadow:
+      0 0 20px rgba(6,182,212,0.6),
+      0 0 60px rgba(6,182,212,0.2);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+
+  .title-sub {
+    font-size: 11px;
+    color: var(--muted);
+    letter-spacing: 0.4em;
+    text-transform: uppercase;
+  }
+
+  .classification-banner {
+    display: inline-block;
+    background: var(--danger);
+    color: #fff;
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    padding: 3px 18px;
+    margin-top: 10px;
+    font-weight: bold;
+  }
+
+  /* ─── SECTION LABEL ─── */
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.5em;
+    color: var(--accent2);
+    text-transform: uppercase;
+    border-left: 2px solid var(--accent2);
+    padding-left: 10px;
+    margin-bottom: 16px;
+  }
+
+  /* ─── GRID LAYOUT ─── */
+  .main-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 380px);
+    gap: 24px;
+    align-items: start;
+  }
+
+  /* ─── BRIEFING PANEL ─── */
+  .briefing-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    padding: 20px 22px;
+    margin-bottom: 24px;
+  }
+
+  .briefing-panel .panel-header {
+    font-size: 10px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 10px;
+    margin-bottom: 14px;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  .briefing-text {
+    font-size: 13px;
+    line-height: 1.85;
+    color: var(--bright);
+  }
+
+  .briefing-text p { margin-bottom: 12px; }
+  .briefing-text p:last-child { margin-bottom: 0; }
+
+  .briefing-text .redact {
+    background: var(--redacted);
+    color: var(--redacted);
+    cursor: default;
+    user-select: none;
+    padding: 0 2px;
+  }
+
+  .briefing-text .em {
+    color: var(--accent);
+  }
+
+  .briefing-text .warn-text {
+    color: var(--warn);
+  }
+
+  /* ─── RESOURCE SIGNALS ─── */
+  .resource-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+  }
+
+  .resource-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    padding: 10px 14px;
+  }
+
+  .resource-name {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .resource-bar {
+    height: 3px;
+    background: var(--dim);
+    width: 100%;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .resource-bar-fill {
+    height: 100%;
+    background: var(--accent);
+    position: absolute;
+    left: 0;
+    top: 0;
+  }
+
+  .resource-bar-fill.hidden {
+    background: var(--dim);
+    width: 100% !important;
+  }
+
+  .resource-status {
+    font-size: 10px;
+    color: var(--muted);
+    margin-top: 4px;
+    font-style: italic;
+  }
+
+  /* ─── PRINCIPAL CARD ─── */
+  .principal-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--morrow);
+    position: sticky;
+    top: 20px;
+  }
+
+  .principal-header {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .principal-header .label {
+    font-size: 9px;
+    letter-spacing: 0.4em;
+    color: var(--muted);
+  }
+
+  .principal-header .status-badge {
+    font-size: 9px;
+    letter-spacing: 0.2em;
+    color: var(--green);
+    border: 1px solid rgba(45,164,78,0.3);
+    padding: 2px 8px;
+  }
+
+  .art-panel {
+    padding: 16px;
+    border-bottom: 1px solid var(--border);
+    background: #060a0c;
+    text-align: center;
+  }
+
+  .ascii-art {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 12.5px;
+    line-height: 1.25;
+    color: var(--morrow);
+    text-shadow: 0 0 8px rgba(6,182,212,0.4);
+    display: inline-block;
+    text-align: left;
+    white-space: pre;
+  }
+
+  .principal-meta {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .principal-name {
+    font-size: 16px;
+    color: var(--morrow);
+    letter-spacing: 0.05em;
+    margin-bottom: 2px;
+    text-shadow: 0 0 12px rgba(6,182,212,0.3);
+  }
+
+  .principal-title {
+    font-size: 10px;
+    color: var(--muted);
+    letter-spacing: 0.2em;
+  }
+
+  .principal-stats {
+    padding: 14px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .stat-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-size: 11px;
+  }
+
+  .stat-row:last-child { margin-bottom: 0; }
+
+  .stat-key { color: var(--muted); letter-spacing: 0.2em; font-size: 10px; }
+
+  .stat-pips {
+    display: flex;
+    gap: 3px;
+  }
+
+  .pip {
+    width: 8px;
+    height: 8px;
+    border: 1px solid var(--dim);
+    background: transparent;
+  }
+
+  .pip.filled {
+    background: var(--morrow);
+    border-color: var(--morrow);
+    box-shadow: 0 0 4px rgba(6,182,212,0.5);
+  }
+
+  .pip.partial {
+    background: var(--accent2);
+    border-color: var(--accent2);
+  }
+
+  .principal-voice {
+    padding: 12px 16px;
+    font-size: 11px;
+    color: var(--muted);
+    font-style: italic;
+    border-left: 2px solid var(--morrow);
+    margin: 0 16px 14px;
+    line-height: 1.6;
+  }
+
+  .principal-tone {
+    padding: 0 16px 14px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+  }
+
+  .tone-tag {
+    display: inline-block;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 2px 8px;
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    margin-right: 6px;
+  }
+
+  .tone-tag.active {
+    border-color: var(--morrow);
+    color: var(--morrow);
+  }
+
+  .integrity-bar-wrap {
+    padding: 0 16px 14px;
+  }
+
+  .integrity-label {
+    font-size: 9px;
+    letter-spacing: 0.3em;
+    color: var(--muted);
+    margin-bottom: 5px;
+  }
+
+  .integrity-bar {
+    height: 4px;
+    background: var(--dim);
+    width: 100%;
+    position: relative;
+  }
+
+  .integrity-fill {
+    position: absolute;
+    left: 0; top: 0; height: 100%;
+    background: var(--morrow);
+    width: 100%;
+    box-shadow: 0 0 6px rgba(6,182,212,0.5);
+    transition: width 0.3s;
+  }
+
+  /* ─── SETUP STATUS ─── */
+  .setup-panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    margin-top: 24px;
+  }
+
+  .setup-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    font-size: 10px;
+    letter-spacing: 0.4em;
+    color: var(--accent2);
+    text-transform: uppercase;
+  }
+
+  .setup-items {
+    padding: 16px 18px;
+  }
+
+  .setup-item {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .setup-item:last-child { border-bottom: none; }
+
+  .setup-icon {
+    font-size: 14px;
+    width: 20px;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .setup-icon.done    { color: var(--green); }
+  .setup-icon.pending { color: var(--warn); }
+  .setup-icon.blocked { color: var(--danger); }
+
+  .setup-content { flex: 1; min-width: 0; }
+
+  .setup-title {
+    font-size: 12px;
+    color: var(--bright);
+    margin-bottom: 3px;
+  }
+
+  .setup-desc {
+    font-size: 10px;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .setup-cmd {
+    display: inline-block;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--accent);
+    font-size: 10px;
+    padding: 2px 8px;
+    margin-top: 5px;
+    font-family: 'Share Tech Mono', monospace;
+  }
+
+  /* ─── GAME LOOP DIAGRAM ─── */
+  .loop-diagram {
+    padding: 20px 22px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    margin-bottom: 24px;
+  }
+
+  .loop-steps {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0;
+    margin-top: 14px;
+  }
+
+  .loop-step {
+    flex: 1;
+    min-width: 100px;
+    text-align: center;
+    padding: 10px 6px;
+    border: 1px solid var(--border);
+    background: var(--bg3);
+    position: relative;
+  }
+
+  .loop-step-num {
+    font-size: 9px;
+    color: var(--muted);
+    margin-bottom: 4px;
+    letter-spacing: 0.2em;
+  }
+
+  .loop-step-name {
+    font-size: 11px;
+    color: var(--bright);
+    letter-spacing: 0.05em;
+  }
+
+  .loop-arrow {
+    color: var(--dim);
+    font-size: 14px;
+    padding: 0 4px;
+    flex-shrink: 0;
+  }
+
+  /* ─── FOOTER ─── */
+  .footer {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--border);
+    font-size: 10px;
+    color: var(--dim);
+    letter-spacing: 0.2em;
+    display: flex;
+    justify-content: space-between;
+  }
+
+  /* ─── BLINK ─── */
+  @keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0; }
+  }
+
+  .cursor {
+    display: inline-block;
+    width: 8px;
+    height: 14px;
+    background: var(--accent);
+    vertical-align: middle;
+    animation: blink 1s step-end infinite;
+    margin-left: 2px;
+  }
+
+  @keyframes flicker {
+    0%   { opacity: 0.97; }
+    2%   { opacity: 0.93; }
+    4%   { opacity: 0.97; }
+    19%  { opacity: 0.97; }
+    21%  { opacity: 0.91; }
+    23%  { opacity: 0.97; }
+    80%  { opacity: 0.97; }
+    82%  { opacity: 0.94; }
+    84%  { opacity: 0.97; }
+  }
+
+  .title-ascii {
+    animation: flicker 8s infinite;
+  }
+
+  /* Responsive */
+  @media (max-width: 740px) {
+    .main-grid { grid-template-columns: 1fr; }
+    .principal-panel { position: static; }
+    .loop-steps { flex-direction: column; align-items: stretch; }
+    .loop-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- BOOT HEADER -->
+  <div class="boot-header">
+    <div class="boot-line"><span class="label">FOUNDATION MANAGEMENT SYSTEM v0.1.0</span> <span class="ok">[ INITIALIZING ]</span></div>
+    <div class="boot-line"><span class="label">CONTENT REGISTRY</span> <span class="warn">[ NOT LOADED — dev environment ]</span></div>
+    <div class="boot-line"><span class="label">PRINCIPALS ON FILE</span> 3 identified · integrity data unavailable</div>
+    <div class="boot-line"><span class="label">ANOMALIES IN FACILITY</span> 0 active · 6 catalogued</div>
+    <div class="boot-line"><span class="label">DIRECTOR SESSION</span> CYCLE 0 · awaiting repository initialization</div>
+  </div>
+
+  <!-- TITLE -->
+  <div class="title-block">
+    <div class="title-ascii">THE PROTOCOL</div>
+    <div class="title-sub">Foundation Containment Management System</div>
+    <div><span class="classification-banner">EYES ONLY — DIRECTOR ACCESS</span></div>
+  </div>
+
+  <!-- MAIN GRID: BRIEFING + PRINCIPAL -->
+  <div class="main-grid">
+
+    <!-- LEFT COLUMN -->
+    <div>
+
+      <!-- BRIEFING -->
+      <div class="section-label">// DIRECTOR BRIEFING</div>
+      <div class="briefing-panel">
+        <div class="panel-header">
+          <span>FOUNDATIONAL DIRECTIVE — CYCLE ZERO</span>
+          <span>CLASSIFICATION: DIRECTOR-ONLY</span>
+        </div>
+        <div class="briefing-text">
+          <p>You are the <span class="em">Director</span>. You do not get a title beyond that. The Foundation does not celebrate its leadership — it consumes them.</p>
+
+          <p>Anomalies arrive. They are <span class="em">real</span>, they are <span class="em">dangerous</span>, and they are <span class="em">already here</span>. Your mandate is containment. Not understanding. Not elimination. <span class="warn-text">Containment.</span></p>
+
+          <p>Each cycle you will assign a <span class="em">Principal</span> to lead an investigation. You will select a Management Protocol — how we approach this thing — and then authorize an Experiment. Outcomes are probabilistic. Personnel are <span class="redact">expendable assets</span> — finite resources in a finite facility.</p>
+
+          <p>Three Principals are available to you. Each brings unique capability and unique cost. Their integrity degrades over time. <span class="warn-text">You will not always have all three.</span></p>
+
+          <p>Resources are <span class="em">not shown to you</span>. The Foundation does not believe Directors should be distracted by numbers. You will feel the consequences. You will infer the rest. When the reports begin to sound different — when the language shifts — pay attention to what that means.</p>
+
+          <p>One resource is shown: <span class="em">BUDGET</span>. It is the only honest thing the Foundation offers you. Spend it carefully. It does not regenerate quickly.</p>
+
+          <p>There are three ways this ends. Only one of them is good.</p>
+        </div>
+      </div>
+
+      <!-- CORE LOOP -->
+      <div class="section-label">// CORE CYCLE LOOP</div>
+      <div class="loop-diagram">
+        <div style="font-size:11px; color: var(--muted); margin-bottom: 8px; letter-spacing: 0.1em;">
+          Each cycle executes in sequence. Management is chosen BEFORE the experiment — it shapes what happens, not what is reported after.
+        </div>
+        <div class="loop-steps">
+          <div class="loop-step">
+            <div class="loop-step-num">01</div>
+            <div class="loop-step-name">ANOMALY ARRIVES</div>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">
+            <div class="loop-step-num">02</div>
+            <div class="loop-step-name">ASSIGN PRINCIPAL</div>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">
+            <div class="loop-step-num">03</div>
+            <div class="loop-step-name">MANAGEMENT PROTOCOL</div>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">
+            <div class="loop-step-num">04</div>
+            <div class="loop-step-name">EXPERIMENT</div>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step">
+            <div class="loop-step-num">05</div>
+            <div class="loop-step-name">RESOLUTION</div>
+          </div>
+          <div class="loop-arrow">→</div>
+          <div class="loop-step" style="border-color: var(--accent2);">
+            <div class="loop-step-num" style="color:var(--accent2);">END</div>
+            <div class="loop-step-name" style="color:var(--accent2);">STATE CHECK</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RESOURCE SIGNALS -->
+      <div class="section-label">// RESOURCE SIGNALS — WHAT YOU WON'T SEE</div>
+      <div class="briefing-panel">
+        <div class="panel-header">
+          <span>HIDDEN LEDGER — DIRECTOR ORIENTATION ONLY</span>
+          <span>NOT SHOWN IN-GAME</span>
+        </div>
+        <div class="resource-grid">
+          <div class="resource-card">
+            <div class="resource-name">COHESION</div>
+            <div class="resource-bar"><div class="resource-bar-fill hidden"></div></div>
+            <div class="resource-status">Reports grow cold. Names become IDs.<br>0 → INHUMAN ENDING</div>
+          </div>
+          <div class="resource-card">
+            <div class="resource-name">EFFECTIVENESS</div>
+            <div class="resource-bar"><div class="resource-bar-fill hidden"></div></div>
+            <div class="resource-status">Anomalies resist longer. Pressure mounts.<br>0 → CONTAINMENT FAILURE</div>
+          </div>
+          <div class="resource-card">
+            <div class="resource-name">CAPABILITY</div>
+            <div class="resource-bar"><div class="resource-bar-fill hidden"></div></div>
+            <div class="resource-status">New options appear silently.<br>No notification. Discover by seeing.</div>
+          </div>
+          <div class="resource-card" style="border-color: var(--accent2);">
+            <div class="resource-name" style="color:var(--accent);">BUDGET</div>
+            <div class="resource-bar"><div class="resource-bar-fill" style="width: 100%;"></div></div>
+            <div class="resource-status" style="color:var(--accent);">The only honest number.<br>Shown. Spend carefully.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SETUP STATUS -->
+      <div class="section-label" style="margin-top: 24px;">// PROJECT SETUP — CURRENT STATE</div>
+      <div class="setup-panel">
+        <div class="setup-header">REPOSITORY INITIALIZATION CHECKLIST</div>
+        <div class="setup-items">
+
+          <div class="setup-item">
+            <div class="setup-icon done">■</div>
+            <div class="setup-content">
+              <div class="setup-title">Architecture & Schema Plans Written</div>
+              <div class="setup-desc">plans/01-architecture.md · plans/02-technical.md · plans/03-schema.md — all decisions locked. Principal terminology finalized. GameState encapsulation pattern defined.</div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon blocked">✕</div>
+            <div class="setup-content">
+              <div class="setup-title">GitHub Authentication</div>
+              <div class="setup-desc">gh token expired. Re-authenticate to create the repo.</div>
+              <div><span class="setup-cmd">! gh auth login</span></div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Initialize GitHub Repository</div>
+              <div class="setup-desc">Create <strong>the-protocol</strong> as a private repo. Initialize with git, push plans/.</div>
+              <div><span class="setup-cmd">gh repo create the-protocol --private --source=. --push</span></div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Install uv & Initialize Python Project</div>
+              <div class="setup-desc">uv not found on PATH. Install Astral uv, then scaffold the_protocol package.</div>
+              <div><span class="setup-cmd">curl -LsSf https://astral.sh/uv/install.sh | sh</span></div>
+              <div><span class="setup-cmd">uv init the_protocol && uv add textual pydantic loguru platformdirs</span></div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Create Project Skeleton</div>
+              <div class="setup-desc">Scaffold app/ engine/ data/ directories. Stub main.py, game_state.py, content loader. Wire pyproject.toml with Python 3.11+ constraint and dev dependencies (pytest, pytest-asyncio, ruff, ty).</div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Write First Principal — Dr. Elara Morrow</div>
+              <div class="setup-desc">data/principals/morrow/ — TOML schema, 4 ASCII art states (intact/damaged/corrupted/absent), voice COMMUNICATIONS pool.</div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">TEST-00 Smoke Test Passing</div>
+              <div class="setup-desc">ContentRegistry loads all TOML, Pydantic validates, all art file cross-references resolve. This is the first green CI gate.</div>
+              <div><span class="setup-cmd">uv run pytest tests/test_content_registry.py</span></div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COLUMN — PRINCIPAL CARD -->
+    <div>
+      <div class="section-label">// PRINCIPAL ON FILE — MORROW</div>
+      <div class="principal-panel">
+
+        <div class="principal-header">
+          <span class="label">PRINCIPAL FILE — INTACT</span>
+          <span class="status-badge">ACTIVE</span>
+        </div>
+
+        <div class="art-panel">
+          <div class="ascii-art">
+     ╔══════════════════════╗
+     ║  PRINCIPAL — MORROW  ║
+     ╚══════════════════════╝
+
+          ┌──────────┐
+          │  ░░░░░░  │
+          │ ░ ▓▓▓▓ ░ │
+          │ ░ ████ ░ │
+          │  ░░░░░░  │
+          └────┬─┬───┘
+         ┌─────┘ └─────┐
+         │  ┌───────┐  │
+         │  │ ░░░░░ │  │
+         │  │ ░ M ░ │  │
+         │  │ ░░░░░ │  │
+         │  └───────┘  │
+         └─────────────┘
+          ┌─┐       ┌─┐
+          │ │ ╔═══╗ │ │
+          │ │ ║   ║ │ │
+          │ │ ╚═══╝ │ │
+          └─┘       └─┘
+         ┌───────────────┐
+         │               │
+         │   ███ E ███   │
+         │               │
+         └───────────────┘
+              │   │
+             ─┘   └─
+     ▓ INTEGRITY: ████████████ ▓
+          </div>
+        </div>
+
+        <div class="principal-meta">
+          <div class="principal-name">Dr. Elara Morrow</div>
+          <div class="principal-title">SENIOR CONTAINMENT SPECIALIST</div>
+        </div>
+
+        <div class="principal-stats">
+          <div class="stat-row">
+            <span class="stat-key">CONTAINMENT</span>
+            <div class="stat-pips">
+              <div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip"></div><div class="pip"></div>
+            </div>
+          </div>
+          <div class="stat-row">
+            <span class="stat-key">RESEARCH</span>
+            <div class="stat-pips">
+              <div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip"></div><div class="pip"></div><div class="pip"></div><div class="pip"></div>
+            </div>
+          </div>
+          <div class="stat-row">
+            <span class="stat-key">RISK TOLERANCE</span>
+            <div class="stat-pips">
+              <div class="pip filled"></div><div class="pip filled"></div><div class="pip filled"></div>
+              <div class="pip filled"></div>
+              <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+              <div class="pip"></div><div class="pip"></div><div class="pip"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="integrity-bar-wrap">
+          <div class="integrity-label">INTEGRITY — INTACT (100)</div>
+          <div class="integrity-bar">
+            <div class="integrity-fill" style="width: 100%;"></div>
+          </div>
+        </div>
+
+        <div class="principal-voice">
+          "Containment is not the absence of understanding. It is the decision that understanding can wait."
+        </div>
+
+        <div class="principal-tone">
+          <span class="tone-tag active">CLINICAL</span>
+          <span class="tone-tag">RECKLESS</span>
+          <span class="tone-tag">RESIGNED</span>
+          <span class="tone-tag">PARANOID</span>
+        </div>
+
+        <!-- OTHER PRINCIPALS TEASER -->
+        <div style="padding: 12px 16px; border-top: 1px solid var(--border);">
+          <div class="section-label" style="margin-bottom: 10px;">// OTHER PRINCIPALS</div>
+
+          <div style="display: flex; flex-direction: column; gap: 8px;">
+            <div style="padding: 8px 12px; border: 1px solid var(--border); background: var(--bg3); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 11px; color: var(--vasquez);">Dr. Vasquez</div>
+                <div style="font-size: 9px; color: var(--muted); letter-spacing: 0.2em;">RECKLESS — High risk, high gain</div>
+              </div>
+              <div style="font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px;">TBD</div>
+            </div>
+
+            <div style="padding: 8px 12px; border: 1px solid var(--border); background: var(--bg3); display: flex; justify-content: space-between; align-items: center;">
+              <div>
+                <div style="font-size: 11px; color: var(--redacted-color);">[REDACTED]</div>
+                <div style="font-size: 9px; color: var(--muted); letter-spacing: 0.2em;">UNKNOWN — file sealed</div>
+              </div>
+              <div style="font-size: 9px; color: var(--muted); border: 1px solid var(--border); padding: 2px 6px;">TBD</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <span>THE PROTOCOL — SESSION: PRE-ALPHA · CYCLE: 0</span>
+    <span>FOUNDATION INTERNAL USE ONLY<span class="cursor"></span></span>
+  </div>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="luxury">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Protocol — Schema FINAL</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/daisyui.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daisyui@5.5.19/themes.css">
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4.2.4/dist/index.global.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({ startOnLoad: true, theme: 'dark', themeVariables: { background: '#0d0d0d', primaryColor: '#1e1e2e', primaryTextColor: '#c8a96e', primaryBorderColor: '#4a3f2f', lineColor: '#5a5040', edgeLabelBackground: '#1a1a1a', fontSize: '12px', nodeTextColor: '#e0d5c0' } });</script>
+  <style type="text/css">
+    body { font-family: 'Courier New', monospace; }
+    .gold { color: #c8a96e; }
+    .dim { color: rgba(255,255,255,0.35); }
+    .section-head { font-size: 0.62rem; font-weight: 800; letter-spacing: 0.2em; text-transform: uppercase; color: rgba(200,169,110,0.45); border-bottom: 1px solid rgba(200,169,110,0.1); padding-bottom: 0.35rem; margin-bottom: 0.75rem; }
+    .arch-note { border: 1px solid rgba(200,169,110,0.18); border-radius: 0.5rem; background: rgba(200,169,110,0.04); padding: 0.85rem 1rem; }
+    .diagram-wrap { background: rgba(10,10,16,0.8); border: 1px solid rgba(200,169,110,0.12); border-radius: 0.5rem; padding: 1.25rem; overflow-x: auto; }
+    hr.dim-rule { border: none; border-top: 1px solid rgba(200,169,110,0.08); margin: 2rem 0; }
+    .tag { display: inline-block; font-size: 0.58rem; font-weight: 700; letter-spacing: 0.07em; padding: 0.08rem 0.3rem; border-radius: 99px; text-transform: uppercase; vertical-align: middle; margin-left: 0.25rem; }
+    .tag-hidden  { background: rgba(239,68,68,0.15);   color: #fca5a5; }
+    .tag-shown   { background: rgba(34,197,94,0.15);   color: #86efac; }
+    .tag-derived { background: rgba(99,102,241,0.15);  color: #a5b4fc; }
+    .tag-prov    { background: rgba(148,163,184,0.12); color: #94a3b8; }
+    .entry { padding: 0.5rem 0; border-bottom: 1px solid rgba(200,169,110,0.07); }
+    .entry:last-child { border-bottom: none; }
+    .entry-name { font-size: 0.82rem; font-weight: 700; color: #c8a96e; }
+    .entry-sub  { font-size: 0.7rem; font-weight: 400; color: rgba(200,169,110,0.5); margin-left: 0.4rem; }
+    .entry-desc { font-size: 0.7rem; color: rgba(255,255,255,0.38); margin-top: 0.18rem; line-height: 1.5; }
+    .p-cat { display: grid; grid-template-columns: 1fr 2fr; gap: 0.25rem 0.75rem; font-size: 0.72rem; padding: 0.4rem 0; border-bottom: 1px solid rgba(200,169,110,0.07); }
+    .p-cat:last-child { border-bottom: none; }
+    .personnel-box { border: 1px solid rgba(200,169,110,0.15); border-radius: 0.4rem; padding: 0.75rem 0.9rem; background: rgba(200,169,110,0.03); }
+
+    /* final terminology ref table */
+    .ref-table { width: 100%; border-collapse: collapse; }
+    .ref-table th { font-size: 0.6rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(200,169,110,0.4); text-align: left; padding: 0.5rem 0.6rem; border-bottom: 1px solid rgba(200,169,110,0.12); }
+    .ref-table td { font-size: 0.72rem; padding: 0.45rem 0.6rem; border-bottom: 1px solid rgba(255,255,255,0.04); vertical-align: top; }
+    .ref-table tr:last-child td { border-bottom: none; }
+    .ref-table tr:hover td { background: rgba(200,169,110,0.03); }
+    .cat-row td { background: rgba(200,169,110,0.04); font-size: 0.58rem; font-weight: 800; letter-spacing: 0.12em; text-transform: uppercase; color: rgba(200,169,110,0.4); }
+    .name-final { font-weight: 700; color: #c8a96e; font-size: 0.78rem; letter-spacing: 0.04em; }
+    .name-code  { font-size: 0.65rem; color: rgba(255,255,255,0.3); font-family: monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-base-100 text-base-content p-6 md:p-10">
+<div class="max-w-5xl mx-auto">
+
+  <div class="mb-8">
+    <p class="text-xs gold tracking-widest uppercase mb-1">The Protocol · Schema — FINAL</p>
+    <h1 class="text-2xl font-bold gold mb-1">All terminology locked.</h1>
+    <p class="text-sm dim">Written to <code>plans/03-schema.md</code> for continuity.</p>
+  </div>
+
+  <!-- Architecture Note -->
+  <div class="arch-note mb-8">
+    <p class="text-xs font-bold gold uppercase tracking-widest mb-2">Core Architecture</p>
+    <p class="text-xs dim leading-relaxed">
+      <strong class="text-white/55">Anomaly</strong> and <strong class="text-white/55">Principal</strong> are the two load-bearing data entities. All other data attaches to one or both. Both can own unique Experiments and a Management protocol. Anomalies persist in the facility across cycles. Profile is tracked per-anomaly and also persists.
+    </p>
+  </div>
+
+  <!-- Game Loop -->
+  <section class="mb-10">
+    <div class="section-head">Core Game Loop</div>
+    <div class="diagram-wrap">
+      <div class="mermaid">
+flowchart TD
+    A([New Anomaly Arrives\nTitle + Brief only]) --> B
+
+    subgraph ASSIGN ["Cycle Setup — 3 Choices"]
+      B[Assign Principal] --> C[Choose Management Protocol\n1 standard · 1 principal · 1 anomaly]
+      C --> D[Choose Experiment\n1 principal sig · 2 anomaly-specific]
+    end
+
+    D --> E{Event Roll}
+    E -->|Fires| F[Event\nneutral — may be positive or negative]
+    E -->|Clear| G[Experiment Resolves\nPersonnel pool depletes]
+    F --> G
+
+    G --> H{End State Check}
+    H -->|Cohesion = 0| I([INHUMAN ENDING\nThe Foundation is monstrous.\nYou are indistinguishable from them.])
+    H -->|Effectiveness = 0| J([CONTAINMENT FAILURE\nContainment failed.\nLast report filed by no one.])
+    H -->|All resolved| K([FULL CONTAINMENT\nThanks to your sacrifices\nand good judgement — the world is safe.])
+    H -->|Continue| L[Next Anomaly Added\nAll prior anomalies persist\nProfile per-anomaly also persists]
+    L --> A
+
+    style A fill:#1e1a12,stroke:#c8a96e,color:#c8a96e
+    style I fill:#2a0a16,stroke:#c026d3,color:#f0abfc
+    style J fill:#2a0a0a,stroke:#ef4444,color:#fca5a5
+    style K fill:#0a2a14,stroke:#22c55e,color:#86efac
+    style ASSIGN fill:#12120e,stroke:#4a3f2f
+      </div>
+    </div>
+  </section>
+
+  <hr class="dim-rule">
+
+  <!-- Resources + Data -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-10 mb-10">
+    <div>
+      <div class="section-head">Resources <span class="dim font-normal">— GameState values</span></div>
+
+      <div class="entry">
+        <div class="entry-name">COHESION <span class="tag tag-hidden">hidden</span></div>
+        <div class="entry-desc">Combined moral erosion + supernatural decay. At 0 → INHUMAN ENDING. Drives narrative tone and hidden roll penalty.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">EFFECTIVENESS <span class="tag tag-hidden">hidden</span></div>
+        <div class="entry-desc">How well containment is working. Starts high, decays to 0 → CONTAINMENT FAILURE. Merges pressure + external fear into one clinical measure.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">BUDGET <span class="tag tag-shown">shown</span></div>
+        <div class="entry-desc">Only visible resource. Spent on management protocols. Creates hard choices.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">CAPABILITY <span class="tag tag-hidden">hidden</span></div>
+        <div class="entry-desc">Accumulated research. Sliding number with distinct tiers. Unlocks options silently — player discovers by seeing new choices appear.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">PROFILE <span class="tag tag-hidden">hidden</span> <span class="entry-sub">per-anomaly</span></div>
+        <div class="entry-desc">Entity knowledge as a percentage. 100% = file complete. Persists alongside the anomaly across cycles. Earned by running study experiments.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">CYCLE <span class="tag tag-hidden">hidden</span></div>
+        <div class="entry-desc">Internal counter. Gates certain anomaly appearances (KETER in cycles 5–6). Player infers progression from context.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">DIRECTOR INTEGRITY <span class="tag tag-hidden">hidden</span></div>
+        <div class="entry-desc">Director's own degradation. At low levels, log language becomes cold: "3 personnel resources lost" instead of "3 people died."</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">PERSONNEL <span class="tag tag-derived">derived</span></div>
+        <div class="entry-desc">Three separate pools: Researcher, Security, Engineer. See below.</div>
+      </div>
+    </div>
+
+    <div>
+      <div class="section-head">Data <span class="dim font-normal">— TOML files, loaded at startup</span></div>
+
+      <div class="entry">
+        <div class="entry-name">ANOMALY</div>
+        <div class="entry-desc">Title + brief only shown. Persists in facility across cycles. Owns 2 unique experiments + 1 management protocol. Profile tracked per-instance.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">PRINCIPAL <span class="entry-sub">"Principal Scientist" at intro; "Principal" in-game & code</span></div>
+        <div class="entry-desc">Named lead characters. Own 1 signature experiment + 1 management protocol. Can die, transform, or be incapacitated.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">EXPERIMENT</div>
+        <div class="entry-desc">Title + description shown (hints only — no mechanics visible). Logic in co-located .py. Data in .toml. Path: <code class="text-xs">experiment/slug/name.{toml,py}</code></div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">MANAGEMENT <span class="entry-sub">protocol chosen before experiment</span></div>
+        <div class="entry-desc">3 per cycle: 1 standard, 1 principal's, 1 anomaly-specific. Shapes experiment conditions and outcomes.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">EVENT <span class="entry-sub">was: Incident</span></div>
+        <div class="entry-desc">A conditional game-loop interruption. Not inherently positive or negative. May branch into subtypes over time.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">ENDING</div>
+        <div class="entry-desc">3 data entries. Trigger conditions, final screen text, tone.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">COMMUNICATIONS <span class="entry-sub">was: Narrative Bank</span></div>
+        <div class="entry-desc">Template line pools per context. No-repeat queues. One file per pool.</div>
+      </div>
+      <div class="entry">
+        <div class="entry-name">ASSET <span class="tag tag-prov">provisional</span> <span class="entry-sub">was: Equipment</span></div>
+        <div class="entry-desc">Obtained obscurely through experiments. Description cryptic. Effects surface as new options — player discovers, doesn't receive.</div>
+      </div>
+    </div>
+  </div>
+
+  <hr class="dim-rule">
+
+  <!-- Personnel -->
+  <section class="mb-10">
+    <div class="section-head">Personnel Pools <span class="dim font-normal">— 3 categories, assignment model</span></div>
+    <p class="text-xs dim mb-4">Start unassigned each cycle. Assigning to experiments or management protocols depletes the pool even when things go well. Incidents shrink pools permanently.</p>
+    <div class="personnel-box">
+      <div class="p-cat" style="font-size:0.58rem;font-weight:800;letter-spacing:0.12em;text-transform:uppercase;color:rgba(200,169,110,0.3);">
+        <span>Category</span><span>Depleted by</span>
+      </div>
+      <div class="p-cat">
+        <span class="text-white/60 font-bold">Researcher</span>
+        <span class="dim">Assignment to study/analysis experiments.</span>
+      </div>
+      <div class="p-cat">
+        <span class="text-white/60 font-bold">Security</span>
+        <span class="dim">Assignment to management protocols involving physical threat.</span>
+      </div>
+      <div class="p-cat">
+        <span class="text-white/60 font-bold">Engineer</span>
+        <span class="dim">Assignment to advanced management protocols requiring infrastructure work.</span>
+      </div>
+    </div>
+  </section>
+
+  <hr class="dim-rule">
+
+  <!-- Final Terminology Reference -->
+  <section class="mb-10">
+    <div class="section-head">Final Terminology Reference</div>
+    <p class="text-xs dim mb-4">All names locked. In-game display name / internal code name where they differ.</p>
+    <div class="overflow-x-auto rounded-box" style="border:1px solid rgba(200,169,110,0.1);">
+      <table class="ref-table">
+        <thead>
+          <tr><th>Concept</th><th>Final Name</th><th>Code Name</th><th>Visibility</th></tr>
+        </thead>
+        <tbody>
+          <tr class="cat-row"><td colspan="4">Resources</td></tr>
+          <tr><td class="dim">Humanity / Morale</td><td><span class="name-final">COHESION</span></td><td class="name-code">cohesion</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+          <tr><td class="dim">Pressure / Fear</td><td><span class="name-final">EFFECTIVENESS</span></td><td class="name-code">effectiveness</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+          <tr><td class="dim">Budget</td><td><span class="name-final">BUDGET</span></td><td class="name-code">budget</td><td><span class="tag tag-shown">shown</span></td></tr>
+          <tr><td class="dim">Tech Level</td><td><span class="name-final">CAPABILITY</span></td><td class="name-code">capability</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+          <tr><td class="dim">Knowledge (per-anomaly)</td><td><span class="name-final">PROFILE</span></td><td class="name-code">profile</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+          <tr><td class="dim">Round Counter</td><td><span class="name-final">CYCLE</span></td><td class="name-code">cycle</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+          <tr><td class="dim">Director Integrity</td><td><span class="name-final">DIRECTOR INTEGRITY</span></td><td class="name-code">director_integrity</td><td><span class="tag tag-hidden">hidden</span></td></tr>
+
+          <tr class="cat-row"><td colspan="4">Data Entities</td></tr>
+          <tr><td class="dim">Anomaly</td><td><span class="name-final">ANOMALY</span></td><td class="name-code">anomaly</td><td></td></tr>
+          <tr><td class="dim">Scientist / Lead</td><td><span class="name-final">PRINCIPAL</span></td><td class="name-code">principal</td><td></td></tr>
+          <tr><td class="dim">Experiment</td><td><span class="name-final">EXPERIMENT</span></td><td class="name-code">experiment</td><td></td></tr>
+          <tr><td class="dim">Containment Protocol</td><td><span class="name-final">MANAGEMENT</span></td><td class="name-code">management</td><td></td></tr>
+          <tr><td class="dim">Incident</td><td><span class="name-final">EVENT</span></td><td class="name-code">event</td><td></td></tr>
+          <tr><td class="dim">Narrative Bank</td><td><span class="name-final">COMMUNICATIONS</span></td><td class="name-code">comms</td><td></td></tr>
+          <tr><td class="dim">Equipment</td><td><span class="name-final">ASSET</span></td><td class="name-code">asset</td><td><span class="tag tag-prov">provisional</span></td></tr>
+
+          <tr class="cat-row"><td colspan="4">Personnel</td></tr>
+          <tr><td class="dim">—</td><td><span class="name-final">RESEARCHER</span></td><td class="name-code">researcher</td><td><span class="tag tag-derived">derived</span></td></tr>
+          <tr><td class="dim">—</td><td><span class="name-final">SECURITY</span></td><td class="name-code">security</td><td><span class="tag tag-derived">derived</span></td></tr>
+          <tr><td class="dim">—</td><td><span class="name-final">ENGINEER</span></td><td class="name-code">engineer</td><td><span class="tag tag-derived">derived</span></td></tr>
+
+          <tr class="cat-row"><td colspan="4">Endings</td></tr>
+          <tr><td class="dim">Transformation</td><td><span class="name-final">INHUMAN ENDING</span></td><td class="name-code">ending_inhuman</td><td></td></tr>
+          <tr><td class="dim">Pressure failure</td><td><span class="name-final">CONTAINMENT FAILURE</span></td><td class="name-code">ending_breach</td><td></td></tr>
+          <tr><td class="dim">Win</td><td><span class="name-final">FULL CONTAINMENT</span></td><td class="name-code">ending_win</td><td></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <div class="mt-6 text-xs" style="color:rgba(200,169,110,0.3);">Schema decisions finalised · Written to plans/03-schema.md</div>
+</div>
+</body>
+</html>
