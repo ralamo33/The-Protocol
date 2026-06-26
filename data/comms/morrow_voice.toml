@@ -1,0 +1,22 @@
+[morrow_success]
+lines = [
+    "{principal_name} completed {experiment_verb} of the {anomaly_descriptor} entity. {outcome_text}.",
+    "SCP file updated. {principal_name}: containment achieved via {experiment_verb}. {outcome_text}.",
+    "Protocol executed within acceptable parameters. {principal_name} reports: {outcome_text}.",
+    "Containment confirmed. {anomaly_descriptor} entity responding to {experiment_verb}. {outcome_text}.",
+]
+
+[morrow_failure]
+lines = [
+    "{principal_name} reports anomalous escalation during {experiment_verb}. {outcome_text}.",
+    "Experiment inconclusive. {principal_name}: containment protocols insufficient. {outcome_text}.",
+    "{anomaly_descriptor} entity resisted {experiment_verb}. {principal_name} recommends immediate review. {outcome_text}.",
+    "Deviation from expected parameters during {experiment_verb}. {outcome_text}.",
+]
+
+[morrow_incident]
+lines = [
+    "Personnel incident recorded during {experiment_verb}. Details redacted pending review.",
+    "{principal_name} notes {outcome_text}. Recommend increased containment margin.",
+    "Incident log updated. {anomaly_descriptor} entity interaction resulted in {outcome_text}.",
+]
