@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>THE PROTOCOL — Implementation Plan v1</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=VT323&display=swap');
+
+  :root {
+    --bg:     #080c0e;
+    --bg2:    #0d1418;
+    --bg3:    #111a1e;
+    --border: #1e3040;
+    --dim:    #2a4050;
+    --muted:  #4a7080;
+    --text:   #8ab8c8;
+    --bright: #c8e8f0;
+    --accent: #06b6d4;
+    --accent2:#0e7490;
+    --warn:   #d4a006;
+    --danger: #c42b2b;
+    --green:  #2da44e;
+    --purple: #a78bfa;
+    --orange: #fb923c;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Share Tech Mono', 'Courier New', monospace;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  body::after {
+    content: '';
+    position: fixed; inset: 0;
+    background: repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,0.07) 2px,rgba(0,0,0,0.07) 4px);
+    pointer-events: none; z-index: 1000;
+  }
+
+  .page { max-width: 1100px; margin: 0 auto; padding: 24px 20px 60px; }
+
+  /* HEADER */
+  .page-header {
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 14px; margin-bottom: 28px;
+    display: flex; justify-content: space-between; align-items: flex-end;
+  }
+  .page-title {
+    font-family: 'VT323', monospace;
+    font-size: 36px; color: var(--accent);
+    text-shadow: 0 0 16px rgba(6,182,212,0.5);
+    letter-spacing: 0.1em;
+  }
+  .page-meta { font-size: 10px; color: var(--muted); letter-spacing: 0.3em; text-align: right; }
+
+  .section-label {
+    font-size: 10px; letter-spacing: 0.5em; color: var(--accent2);
+    text-transform: uppercase; border-left: 2px solid var(--accent2);
+    padding-left: 10px; margin-bottom: 14px; margin-top: 28px;
+  }
+  .section-label:first-child { margin-top: 0; }
+
+  /* GOAL BANNER */
+  .goal-banner {
+    background: var(--bg2); border: 1px solid var(--accent2);
+    padding: 16px 20px; margin-bottom: 24px;
+    display: flex; gap: 16px; align-items: flex-start;
+  }
+  .goal-icon { font-size: 20px; color: var(--accent); flex-shrink: 0; margin-top: 2px; }
+  .goal-text { font-size: 13px; color: var(--bright); line-height: 1.7; }
+  .goal-text .em { color: var(--accent); }
+  .goal-cmd {
+    display: inline-block; background: var(--bg3); border: 1px solid var(--border);
+    color: var(--accent); padding: 2px 10px; margin-top: 6px; font-size: 12px;
+  }
+
+  /* TWO COLUMN */
+  .two-col { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 20px; }
+  .three-col { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 16px; }
+
+  /* CARD */
+  .card { background: var(--bg2); border: 1px solid var(--border); }
+  .card-header {
+    padding: 9px 14px; border-bottom: 1px solid var(--border);
+    font-size: 9px; letter-spacing: 0.4em; color: var(--muted);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .card-body { padding: 14px 16px; }
+
+  /* FILE CHANGE CARDS */
+  .file-card { background: var(--bg2); border: 1px solid var(--border); margin-bottom: 16px; }
+  .file-header {
+    padding: 8px 14px; border-bottom: 1px solid var(--border);
+    display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;
+  }
+  .file-path { font-size: 13px; color: var(--accent); }
+  .file-badge {
+    font-size: 9px; letter-spacing: 0.3em; padding: 2px 8px;
+    border: 1px solid; text-transform: uppercase;
+  }
+  .badge-modify { border-color: var(--warn); color: var(--warn); }
+  .badge-new    { border-color: var(--green); color: var(--green); }
+  .badge-unchanged { border-color: var(--dim); color: var(--muted); }
+
+  .file-desc { padding: 10px 14px; font-size: 11px; color: var(--muted); line-height: 1.6; border-bottom: 1px solid var(--border); }
+
+  /* CODE BLOCK */
+  .code-block {
+    background: #050809; border-top: 1px solid var(--border);
+    padding: 14px 16px; overflow-x: auto;
+  }
+  .code-block pre {
+    font-family: 'Share Tech Mono', monospace;
+    font-size: 11.5px; line-height: 1.6; color: var(--text);
+    white-space: pre; margin: 0;
+    min-width: 0;
+  }
+
+  /* Syntax colors */
+  .kw  { color: #c792ea; }
+  .fn  { color: #82aaff; }
+  .str { color: #c3e88d; }
+  .cm  { color: var(--muted); font-style: italic; }
+  .cl  { color: #ffcb6b; }
+  .op  { color: var(--accent); }
+  .nu  { color: #f78c6c; }
+  .mk  { color: #89ddff; }  /* markup / Rich tags */
+  .dc  { color: var(--accent2); }  /* decorator */
+
+  /* TERMINAL MOCKUP */
+  .terminal-wrap { margin-bottom: 20px; }
+  .terminal-chrome {
+    background: #1a1a2e; border: 1px solid #333;
+    border-radius: 6px 6px 0 0;
+  }
+  .terminal-bar {
+    display: flex; align-items: center; gap: 6px;
+    padding: 8px 12px; border-bottom: 1px solid #333;
+    background: #252540;
+    border-radius: 6px 6px 0 0;
+  }
+  .dot { width: 12px; height: 12px; border-radius: 50%; }
+  .dot-r { background: #ff5f57; }
+  .dot-y { background: #ffbd2e; }
+  .dot-g { background: #28c840; }
+  .terminal-title { font-size: 11px; color: #888; margin-left: auto; }
+  .terminal-body {
+    background: var(--bg); padding: 20px 24px;
+    min-height: 200px; border-radius: 0 0 6px 6px;
+    border: 1px solid #333; border-top: none;
+  }
+  .t-line { font-size: 13px; line-height: 1.7; margin-bottom: 4px; white-space: pre-wrap; }
+  .t-dim    { color: var(--muted); }
+  .t-accent { color: var(--accent); }
+  .t-bright { color: var(--bright); }
+  .t-warn   { color: var(--warn); }
+  .t-title  { color: var(--accent); font-size: 15px; margin-bottom: 8px; letter-spacing: 0.05em; }
+  .t-sep    { color: #1e3040; }
+  .t-cursor {
+    display: inline-block; width: 9px; height: 15px; background: var(--accent);
+    vertical-align: middle; animation: blink 1s step-end infinite; margin-left: 2px;
+  }
+  @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+  /* STEP LIST */
+  .step-list { display: flex; flex-direction: column; gap: 10px; }
+  .step {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px 14px; background: var(--bg2); border: 1px solid var(--border);
+  }
+  .step-num {
+    font-size: 18px; color: var(--accent2); font-family: 'VT323', monospace;
+    line-height: 1; flex-shrink: 0; width: 24px; text-align: center;
+  }
+  .step-content { flex: 1; min-width: 0; }
+  .step-title { font-size: 12px; color: var(--bright); margin-bottom: 3px; }
+  .step-desc { font-size: 10px; color: var(--muted); line-height: 1.6; }
+  .step-file { font-size: 10px; color: var(--accent); margin-top: 4px; }
+
+  /* DEPENDENCY FLOW */
+  .dep-flow {
+    display: flex; align-items: center; flex-wrap: wrap;
+    gap: 0; padding: 14px;
+  }
+  .dep-box {
+    flex: 1; min-width: 80px; text-align: center;
+    padding: 10px 6px; border: 1px solid var(--border); background: var(--bg3);
+  }
+  .dep-box.highlight { border-color: var(--accent); }
+  .dep-label { font-size: 9px; color: var(--muted); letter-spacing: 0.2em; margin-bottom: 3px; }
+  .dep-name { font-size: 11px; color: var(--bright); }
+  .dep-name.accent { color: var(--accent); }
+  .dep-arrow { color: var(--dim); font-size: 14px; padding: 0 4px; flex-shrink: 0; }
+
+  /* RUN COMMAND */
+  .run-box {
+    background: var(--bg3); border: 1px solid var(--accent2);
+    padding: 14px 18px; display: flex; align-items: center; gap: 14px;
+  }
+  .run-prompt { color: var(--accent2); font-size: 14px; flex-shrink: 0; }
+  .run-cmd { font-size: 14px; color: var(--accent); flex: 1; }
+  .run-note { font-size: 10px; color: var(--muted); }
+
+  /* TEXTUAL CSS BLOCK */
+  .tcss-key   { color: var(--accent); }
+  .tcss-val   { color: #c3e88d; }
+  .tcss-block { color: var(--warn); }
+
+  .footer {
+    margin-top: 40px; padding-top: 14px; border-top: 1px solid var(--border);
+    font-size: 10px; color: var(--dim); letter-spacing: 0.2em;
+    display: flex; justify-content: space-between;
+  }
+
+  @media (max-width: 700px) {
+    .two-col, .three-col { grid-template-columns: 1fr; }
+    .dep-flow { flex-direction: column; align-items: stretch; }
+    .dep-arrow { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <!-- HEADER -->
+  <div class="page-header">
+    <div>
+      <div class="page-title">IMPLEMENTATION PLAN — V1</div>
+      <div style="font-size:11px;color:var(--muted);letter-spacing:0.2em;margin-top:4px;">THE PROTOCOL · MILESTONE: TUI BOOT</div>
+    </div>
+    <div class="page-meta">
+      TARGET: CYCLE 1<br>
+      STATUS: READY TO CODE<br>
+      TESTS: TEST-00 PASSING
+    </div>
+  </div>
+
+  <!-- GOAL -->
+  <div class="goal-banner">
+    <div class="goal-icon">▶</div>
+    <div>
+      <div class="goal-text">
+        <strong style="color:var(--bright);">Goal for this milestone:</strong> run one command and have a <span class="em">real Textual TUI window open</span> displaying the first two paragraphs of the Director Briefing — styled in the terminal aesthetic, keyboard-dismissible, and visually faithful to the planned game feel.
+      </div>
+      <div class="goal-cmd">$ uv run python main.py</div>
+    </div>
+  </div>
+
+  <!-- WHAT IT WILL LOOK LIKE -->
+  <div class="section-label">// TARGET OUTPUT — WHAT YOU'LL SEE</div>
+  <div class="terminal-wrap">
+    <div class="terminal-chrome">
+      <div class="terminal-bar">
+        <div class="dot dot-r"></div>
+        <div class="dot dot-y"></div>
+        <div class="dot dot-g"></div>
+        <div class="terminal-title">The Protocol — Foundation Management System</div>
+      </div>
+      <div class="terminal-body">
+        <div class="t-line t-dim">──────────────────────────────────────────────────────────────</div>
+        <div class="t-line t-title">THE PROTOCOL  ·  FOUNDATION CONTAINMENT MANAGEMENT SYSTEM</div>
+        <div class="t-line t-dim">──────────────────────────────────────────────────────────────</div>
+        <div class="t-line" style="margin-top:12px;">&nbsp;</div>
+        <div class="t-line t-bright">You are the <span class="t-accent">Director</span>. You do not get a title beyond that. The</div>
+        <div class="t-line t-bright">Foundation does not celebrate its leadership — it consumes them.</div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line t-bright">Anomalies arrive. They are <span class="t-accent">real</span>, they are <span class="t-accent">dangerous</span>, and they</div>
+        <div class="t-line t-bright">are <span class="t-accent">already here</span>. Your mandate is containment. Not</div>
+        <div class="t-line t-bright">understanding. Not elimination. <span class="t-warn">Containment.</span></div>
+        <div class="t-line">&nbsp;</div>
+        <div class="t-line t-dim">──────────────────────────────────────────────────────────────</div>
+        <div class="t-line t-dim">q · quit<span class="t-cursor"></span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW IT WORKS -->
+  <div class="section-label">// COMPONENT FLOW</div>
+  <div class="card" style="margin-bottom:24px;">
+    <div class="card-header"><span>CALL CHAIN — app start to rendered text</span></div>
+    <div class="dep-flow">
+      <div class="dep-box">
+        <div class="dep-label">ENTRY</div>
+        <div class="dep-name">main.py</div>
+      </div>
+      <div class="dep-arrow">→</div>
+      <div class="dep-box">
+        <div class="dep-label">APP</div>
+        <div class="dep-name">FoundationApp</div>
+      </div>
+      <div class="dep-arrow">→</div>
+      <div class="dep-box highlight">
+        <div class="dep-label">SCREEN</div>
+        <div class="dep-name accent">LogScreen</div>
+      </div>
+      <div class="dep-arrow">→</div>
+      <div class="dep-box">
+        <div class="dep-label">WIDGET</div>
+        <div class="dep-name">Static (Rich markup)</div>
+      </div>
+      <div class="dep-arrow">→</div>
+      <div class="dep-box">
+        <div class="dep-label">OUTPUT</div>
+        <div class="dep-name">Terminal render</div>
+      </div>
+    </div>
+    <div style="padding: 0 14px 12px; font-size:10px; color:var(--muted); line-height:1.7;">
+      <strong style="color:var(--text);">LogScreen</strong> is the only thing that needs real work. It composes <code>Static</code> widgets with Rich markup for inline color. Textual's CSS handles spacing, background, and borders. No game engine wiring yet — this milestone is purely about the render layer.
+    </div>
+  </div>
+
+  <!-- FILES TO CHANGE -->
+  <div class="section-label">// FILES — WHAT CHANGES</div>
+
+  <!-- app/game.py -->
+  <div class="file-card">
+    <div class="file-header">
+      <span class="file-path">app/game.py</span>
+      <span class="file-badge badge-modify">MODIFY</span>
+    </div>
+    <div class="file-desc">
+      Expand the CSS to set the full terminal aesthetic — dark background, default text color, font. Add the app title so the OS window bar shows the correct name.
+    </div>
+    <div class="code-block"><pre>
+<kw class="kw">from</kw> textual.app <kw class="kw">import</kw> App
+<kw class="kw">from</kw> app.screens.log_screen <kw class="kw">import</kw> LogScreen
+
+
+<kw class="kw">class</kw> <span class="cl">FoundationApp</span>(App):
+    <span class="str">"""The Protocol — Foundation Containment Management System."""</span>
+
+    TITLE = <span class="str">"The Protocol"</span>
+    CSS = <span class="str">"""
+    Screen {
+        background: #080c0e;
+        color: #8ab8c8;
+    }
+    """</span>
+
+    BINDINGS = [(<span class="str">"q"</span>, <span class="str">"quit"</span>, <span class="str">"Quit"</span>)]
+
+    <kw class="kw">def</kw> <span class="fn">on_mount</span>(<span class="kw">self</span>) -> <span class="kw">None</span>:
+        <span class="kw">self</span>.push_screen(LogScreen())</pre></div>
+  </div>
+
+  <!-- app/screens/log_screen.py -->
+  <div class="file-card">
+    <div class="file-header">
+      <span class="file-path">app/screens/log_screen.py</span>
+      <span class="file-badge badge-modify">MODIFY — main work</span>
+    </div>
+    <div class="file-desc">
+      Replace the placeholder with a proper header separator, two briefing paragraphs using Rich markup for inline color, and a footer binding hint. Each paragraph is its own <code>Static</code> widget so they can later be individually animated or replaced.
+    </div>
+    <div class="code-block"><pre>
+<kw class="kw">from</kw> textual.app <kw class="kw">import</kw> ComposeResult
+<kw class="kw">from</kw> textual.screen <kw class="kw">import</kw> Screen
+<kw class="kw">from</kw> textual.widgets <kw class="kw">import</kw> Static
+<kw class="kw">from</kw> textual.containers <kw class="kw">import</kw> ScrollableContainer
+
+<span class="cm"># Rich markup: [bold cyan]text[/] for cyan, [bold #d4a006]text[/] for amber</span>
+_P1 = (
+    <span class="str">"You are the [bold cyan]Director[/]. You do not get a title beyond that. "</span>
+    <span class="str">"The Foundation does not celebrate its leadership — it consumes them."</span>
+)
+_P2 = (
+    <span class="str">"Anomalies arrive. They are [bold cyan]real[/], they are [bold cyan]dangerous[/], "</span>
+    <span class="str">"and they are [bold cyan]already here[/]. Your mandate is containment. "</span>
+    <span class="str">"Not understanding. Not elimination. [bold #d4a006]Containment.[/]"</span>
+)
+_SEP = <span class="str">"─" * 62</span>
+
+
+<kw class="kw">class</kw> <span class="cl">LogScreen</span>(Screen):
+    DEFAULT_CSS = <span class="str">"""
+    LogScreen {
+        background: #080c0e;
+    }
+    #scroll {
+        padding: 0 4;
+    }
+    .header {
+        color: #06b6d4;
+        padding: 1 0 0 0;
+        text-style: bold;
+    }
+    .sep {
+        color: #1e3040;
+        margin: 0;
+    }
+    .briefing {
+        color: #c8e8f0;
+        padding: 1 0;
+    }
+    .hint {
+        color: #2a4050;
+        padding: 1 0 0 0;
+    }
+    """</span>
+
+    <kw class="kw">def</kw> <span class="fn">compose</span>(<span class="kw">self</span>) -> ComposeResult:
+        <kw class="kw">with</kw> ScrollableContainer(id=<span class="str">"scroll"</span>):
+            <kw class="kw">yield</kw> Static(
+                <span class="str">"THE PROTOCOL  ·  FOUNDATION CONTAINMENT MANAGEMENT SYSTEM"</span>,
+                classes=<span class="str">"header"</span>,
+            )
+            <kw class="kw">yield</kw> Static(_SEP, classes=<span class="str">"sep"</span>)
+            <kw class="kw">yield</kw> Static(_P1, classes=<span class="str">"briefing"</span>, markup=<span class="kw">True</span>)
+            <kw class="kw">yield</kw> Static(_P2, classes=<span class="str">"briefing"</span>, markup=<span class="kw">True</span>)
+            <kw class="kw">yield</kw> Static(_SEP, classes=<span class="str">"sep"</span>)
+            <kw class="kw">yield</kw> Static(<span class="str">"q · quit"</span>, classes=<span class="str">"hint"</span>)</pre></div>
+  </div>
+
+  <!-- Other files — unchanged -->
+  <div class="two-col" style="margin-bottom:20px;">
+    <div class="file-card" style="margin-bottom:0;">
+      <div class="file-header">
+        <span class="file-path">main.py</span>
+        <span class="file-badge badge-unchanged">UNCHANGED</span>
+      </div>
+      <div class="file-desc">Already correct. Instantiates <code>FoundationApp()</code> and calls <code>.run()</code>.</div>
+    </div>
+    <div class="file-card" style="margin-bottom:0;">
+      <div class="file-header">
+        <span class="file-path">engine/ · data/ · tests/</span>
+        <span class="file-badge badge-unchanged">UNCHANGED</span>
+      </div>
+      <div class="file-desc">No game engine wiring in this milestone. TEST-00 must stay green.</div>
+    </div>
+  </div>
+
+  <!-- KEY DECISIONS -->
+  <div class="section-label">// TECHNICAL DECISIONS — WHY THESE CHOICES</div>
+  <div class="three-col" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-header"><span>RICH MARKUP</span></div>
+      <div class="card-body" style="font-size:11px;color:var(--muted);line-height:1.7;">
+        Textual's <code>Static</code> accepts <code>markup=True</code> and passes the string to Rich's parser.
+        <code>[bold cyan]text[/]</code> gives inline color without touching Textual CSS.
+        This is how per-character color will later be applied to Principal-tinted text.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>DEFAULT_CSS vs CSS</span></div>
+      <div class="card-body" style="font-size:11px;color:var(--muted);line-height:1.7;">
+        <code>DEFAULT_CSS</code> on a Screen/Widget is overridable by the App's <code>CSS</code>.
+        Good practice: each widget owns its own default styles, App sets global overrides.
+        Keeps styling co-located with the component that owns it.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>ONE STATIC PER PARAGRAPH</span></div>
+      <div class="card-body" style="font-size:11px;color:var(--muted);line-height:1.7;">
+        Each paragraph is a separate <code>Static</code> widget rather than one big block.
+        Later milestones will animate them in one at a time (typewriter effect) or swap them for
+        reactive <code>LogEntry</code> widgets. Splitting now costs nothing.
+      </div>
+    </div>
+  </div>
+
+  <!-- HOW TO RUN -->
+  <div class="section-label">// HOW TO RUN</div>
+  <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:24px;">
+    <div class="run-box">
+      <div class="run-prompt">$</div>
+      <div>
+        <div class="run-cmd">uv run python main.py</div>
+        <div class="run-note">Textual opens a full-screen TUI. Press q to exit.</div>
+      </div>
+    </div>
+    <div class="run-box">
+      <div class="run-prompt">$</div>
+      <div>
+        <div class="run-cmd">uv run pytest tests/ -v</div>
+        <div class="run-note">TEST-00 must stay 6/6 green after the changes.</div>
+      </div>
+    </div>
+    <div class="run-box" style="border-color:var(--dim);">
+      <div class="run-prompt" style="color:var(--dim);">$</div>
+      <div>
+        <div class="run-cmd" style="color:var(--muted);">uv run textual run --dev app/game.py</div>
+        <div class="run-note">Optional: Textual dev mode — live reload + inspector panel.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ORDERED STEPS -->
+  <div class="section-label">// IMPLEMENTATION ORDER</div>
+  <div class="step-list">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <div class="step-title">Edit LogScreen — add header, separators, two briefing Static widgets</div>
+        <div class="step-desc">Replace the placeholder yield. Add <code>_P1</code> and <code>_P2</code> constants at module level with Rich markup. Wire <code>DEFAULT_CSS</code> for colors and padding.</div>
+        <div class="step-file">app/screens/log_screen.py</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <div class="step-title">Edit FoundationApp — add TITLE, expand CSS</div>
+        <div class="step-desc">Set <code>TITLE = "The Protocol"</code> so the window bar is correct. Expand the CSS block to set global background and text color.</div>
+        <div class="step-file">app/game.py</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <div class="step-title">Run the app — verify visually</div>
+        <div class="step-desc"><code>uv run python main.py</code>. Check that the two briefing paragraphs appear with cyan highlights on "Director", "real", "dangerous", "already here" and amber on "Containment." Check that q exits cleanly.</div>
+        <div class="step-file">main.py</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <div class="step-title">Verify TEST-00 still passes</div>
+        <div class="step-desc"><code>uv run pytest tests/ -v</code> — all 6 checks green. The screen changes touch no content-loading code so this should be automatic.</div>
+        <div class="step-file">tests/test_content_registry.py</div>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">5</div>
+      <div class="step-content">
+        <div class="step-title">Commit — "render director briefing in TUI"</div>
+        <div class="step-desc">Commit both changed files. Push to <code>ralamo33/The-Protocol</code>. This is the first commit where <code>main.py</code> produces visible game output.</div>
+        <div class="step-file">git commit → git push</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AFTER THIS MILESTONE -->
+  <div class="section-label">// AFTER THIS MILESTONE — NEXT TWO</div>
+  <div class="two-col" style="margin-bottom:24px;">
+    <div class="card">
+      <div class="card-header"><span>MILESTONE 2 — PRINCIPAL INTRO SCREEN</span></div>
+      <div class="card-body" style="font-size:11px;color:var(--muted);line-height:1.7;">
+        After the briefing, show the three Principal cards — ASCII art inline, stats, color-tinted. Player presses a key to acknowledge. First time Morrow's art appears in the actual game. ContentRegistry loads real TOML here.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header"><span>MILESTONE 3 — FIRST ANOMALY CYCLE</span></div>
+      <div class="card-body" style="font-size:11px;color:var(--muted);line-height:1.7;">
+        Anomaly arrives. Player picks a Principal, a Management Protocol, an Experiment. Resolution rolls. LogEntry widgets mount. First time the engine's <code>resolve()</code>, <code>GameState.apply_deltas()</code>, and <code>NarrativeEngine.render()</code> run in a real game loop.
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>THE PROTOCOL — IMPL PLAN V1 · MILESTONE: TUI BOOT</span>
+    <span>2 FILES · ~40 LINES · GOAL: VISIBLE OUTPUT</span>
+  </div>
+
+</div>
+</body>
+</html>

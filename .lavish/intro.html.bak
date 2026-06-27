@@ -566,11 +566,10 @@
   <!-- BOOT HEADER -->
   <div class="boot-header">
     <div class="boot-line"><span class="label">FOUNDATION MANAGEMENT SYSTEM v0.1.0</span> <span class="ok">[ INITIALIZING ]</span></div>
-    <div class="boot-line"><span class="label">GITHUB REPO</span> <span class="ok">[ ralamo33/The-Protocol — LIVE ]</span></div>
-    <div class="boot-line"><span class="label">CONTENT REGISTRY</span> <span class="ok">[ TEST-00 PASSING — 6/6 ]</span></div>
-    <div class="boot-line"><span class="label">PRINCIPALS ON FILE</span> 1 of 3 defined · Dr. Elara Morrow — ACTIVE</div>
-    <div class="boot-line"><span class="label">ANOMALIES IN FACILITY</span> 0 of 6 authored · awaiting content</div>
-    <div class="boot-line"><span class="label">DIRECTOR SESSION</span> CYCLE 0 · scaffold complete · engine stubs ready</div>
+    <div class="boot-line"><span class="label">CONTENT REGISTRY</span> <span class="warn">[ NOT LOADED — dev environment ]</span></div>
+    <div class="boot-line"><span class="label">PRINCIPALS ON FILE</span> 3 identified · integrity data unavailable</div>
+    <div class="boot-line"><span class="label">ANOMALIES IN FACILITY</span> 0 active · 6 catalogued</div>
+    <div class="boot-line"><span class="label">DIRECTOR SESSION</span> CYCLE 0 · awaiting repository initialization</div>
   </div>
 
   <!-- TITLE -->
@@ -690,64 +689,60 @@
             <div class="setup-icon done">■</div>
             <div class="setup-content">
               <div class="setup-title">Architecture & Schema Plans Written</div>
-              <div class="setup-desc">plans/01-architecture.md · 02-technical.md · 03-schema.md — all decisions locked. Principal terminology finalized.</div>
+              <div class="setup-desc">plans/01-architecture.md · plans/02-technical.md · plans/03-schema.md — all decisions locked. Principal terminology finalized. GameState encapsulation pattern defined.</div>
             </div>
           </div>
 
           <div class="setup-item">
-            <div class="setup-icon done">■</div>
+            <div class="setup-icon blocked">✕</div>
             <div class="setup-content">
-              <div class="setup-title">GitHub Repository — Live</div>
-              <div class="setup-desc">ralamo33/The-Protocol — private, SSH remote, main branch pushed.</div>
-            </div>
-          </div>
-
-          <div class="setup-item">
-            <div class="setup-icon done">■</div>
-            <div class="setup-content">
-              <div class="setup-title">uv Project Initialized</div>
-              <div class="setup-desc">Python 3.11+ · textual · pydantic · loguru · platformdirs · pytest · ruff</div>
-            </div>
-          </div>
-
-          <div class="setup-item">
-            <div class="setup-icon done">■</div>
-            <div class="setup-content">
-              <div class="setup-title">Project Skeleton Scaffolded</div>
-              <div class="setup-desc">app/ (game, screens, widgets) · engine/ (game_state, loader, resolution, narrative) · data/ · tests/</div>
-            </div>
-          </div>
-
-          <div class="setup-item">
-            <div class="setup-icon done">■</div>
-            <div class="setup-content">
-              <div class="setup-title">Dr. Elara Morrow — First Principal Authored</div>
-              <div class="setup-desc">data/principals/morrow/ — TOML schema, 4 ASCII art states, voice comms pool. Color: #06b6d4.</div>
-            </div>
-          </div>
-
-          <div class="setup-item">
-            <div class="setup-icon done">■</div>
-            <div class="setup-content">
-              <div class="setup-title">TEST-00 Smoke Test — 6/6 Passing</div>
-              <div class="setup-desc">ContentRegistry loads, Pydantic validates, all art file paths resolve.</div>
-              <div><span class="setup-cmd">uv run pytest tests/test_content_registry.py -v</span></div>
+              <div class="setup-title">GitHub Authentication</div>
+              <div class="setup-desc">gh token expired. Re-authenticate to create the repo.</div>
+              <div><span class="setup-cmd">! gh auth login</span></div>
             </div>
           </div>
 
           <div class="setup-item">
             <div class="setup-icon pending">○</div>
             <div class="setup-content">
-              <div class="setup-title">NEXT: Author Remaining 2 Principals</div>
-              <div class="setup-desc">Dr. Vasquez (RECKLESS) + [REDACTED] — TOML, art states, voice pools.</div>
+              <div class="setup-title">Initialize GitHub Repository</div>
+              <div class="setup-desc">Create <strong>the-protocol</strong> as a private repo. Initialize with git, push plans/.</div>
+              <div><span class="setup-cmd">gh repo create the-protocol --private --source=. --push</span></div>
             </div>
           </div>
 
           <div class="setup-item">
             <div class="setup-icon pending">○</div>
             <div class="setup-content">
-              <div class="setup-title">NEXT: First Anomaly + Experiment Set</div>
-              <div class="setup-desc">1 EUCLID anomaly with 2 experiments + 1 management protocol to run the full resolution loop end-to-end.</div>
+              <div class="setup-title">Install uv & Initialize Python Project</div>
+              <div class="setup-desc">uv not found on PATH. Install Astral uv, then scaffold the_protocol package.</div>
+              <div><span class="setup-cmd">curl -LsSf https://astral.sh/uv/install.sh | sh</span></div>
+              <div><span class="setup-cmd">uv init the_protocol && uv add textual pydantic loguru platformdirs</span></div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Create Project Skeleton</div>
+              <div class="setup-desc">Scaffold app/ engine/ data/ directories. Stub main.py, game_state.py, content loader. Wire pyproject.toml with Python 3.11+ constraint and dev dependencies (pytest, pytest-asyncio, ruff, ty).</div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">Write First Principal — Dr. Elara Morrow</div>
+              <div class="setup-desc">data/principals/morrow/ — TOML schema, 4 ASCII art states (intact/damaged/corrupted/absent), voice COMMUNICATIONS pool.</div>
+            </div>
+          </div>
+
+          <div class="setup-item">
+            <div class="setup-icon pending">○</div>
+            <div class="setup-content">
+              <div class="setup-title">TEST-00 Smoke Test Passing</div>
+              <div class="setup-desc">ContentRegistry loads all TOML, Pydantic validates, all art file cross-references resolve. This is the first green CI gate.</div>
+              <div><span class="setup-cmd">uv run pytest tests/test_content_registry.py</span></div>
             </div>
           </div>
 
