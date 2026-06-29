@@ -1,0 +1,15 @@
+[anomaly]
+id              = "book"
+display_id      = "AO-103"
+color           = "#a3e635"
+name            = "Book"
+descriptors     = ["informational", "passive", "ambulatory"]
+threat_level    = 1
+art_file        = "art.txt"
+experiments     = []
+management_methods = ["soft_watch", "standard_cage", "max_suppress"]
+briefing        = "Leather-bound volume, approximately 300 pages, no identifying markings on cover. Has materialized at eleven separate crime scenes across six jurisdictions. Each appearance: the book is open to a page containing a handwritten note in a different script each time. Notes, when correctly interpreted, identify the perpetrator of the associated crime. Entity appears non-hostile. Does not move when observed. Containment is largely administrative."
+
+[anomaly.pressure]
+base_per_round = 0
+max_rounds     = 6

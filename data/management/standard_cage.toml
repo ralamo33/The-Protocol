@@ -1,0 +1,9 @@
+[management]
+id          = "standard_cage"
+name        = "Standard Cage"
+description = "Reinforced enclosure with active monitoring and rotation schedule. Effective for EUCLID-class threats."
+
+[management.cost]
+effectiveness_delta = 20
+cohesion_delta      = -3
+budget_cost         = 15
