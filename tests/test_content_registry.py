@@ -1,4 +1,11 @@
-"""TEST-00 — Startup smoke test. All content loads and validates."""
+"""TEST-00 — Startup schema gate.
+
+Loads all TOML via ContentRegistry.load_from_dir(). Validates Pydantic.
+Checks cross-references and file paths via entity.load(registry).
+
+Bump EXPECTED_* counts as content is authored — these are the single source
+of truth for what has been authored and validated.
+"""
 
 from pathlib import Path
 
@@ -8,43 +15,33 @@ from engine.loader import ContentRegistry
 
 DATA_DIR = Path(__file__).parent.parent / "data"
 
+# Bump as content is authored — MVP targets in comments
+EXPECTED_PRINCIPALS  = 1   # MVP target: 3
+EXPECTED_ANOMALIES   = 3   # MVP target: 6
+EXPECTED_EXPERIMENTS = 1   # MVP target: 15
+EXPECTED_MANAGEMENT  = 3   # MVP target: ~9
 
-def test_content_registry_loads() -> None:
+
+def test_content_registry_counts() -> None:
     registry = ContentRegistry.load_from_dir(DATA_DIR)
-    assert isinstance(registry, ContentRegistry)
+    assert len(registry.principals)  == EXPECTED_PRINCIPALS
+    assert len(registry.anomalies)   == EXPECTED_ANOMALIES
+    assert len(registry.experiments) == EXPECTED_EXPERIMENTS
+    assert len(registry.management)  == EXPECTED_MANAGEMENT
 
 
-def test_principals_load() -> None:
+def test_all_entities_load() -> None:
+    """Each entity resolves its dependencies — passes if no exception is raised."""
     registry = ContentRegistry.load_from_dir(DATA_DIR)
-    assert len(registry.principals) >= 1
-    assert "morrow" in registry.principals
 
+    for principal in registry.principals.values():
+        principal.load(registry)  # resolves signature_experiment, voice pools, art files
 
-def test_morrow_principal_valid() -> None:
-    registry = ContentRegistry.load_from_dir(DATA_DIR)
-    morrow = registry.principals["morrow"]
-    assert morrow.name == "Dr. Elara Morrow"
-    assert morrow.color == "#06b6d4"
-    assert morrow.tone == "CLINICAL"
-    assert morrow.skills.containment == 8
+    for anomaly in registry.anomalies.values():
+        anomaly.load(registry)    # resolves experiments, management_methods, art file
 
+    for experiment in registry.experiments.values():
+        experiment.load(registry) # resolves comms pool keys
 
-def test_morrow_art_files_exist() -> None:
-    registry = ContentRegistry.load_from_dir(DATA_DIR)
-    morrow = registry.principals["morrow"]
-    for state, art_path in morrow.art_paths.items():
-        assert art_path.exists(), f"Missing art file for state '{state}': {art_path}"
-
-
-def test_comms_pools_load() -> None:
-    registry = ContentRegistry.load_from_dir(DATA_DIR)
-    assert "morrow_success" in registry.comms
-    assert "morrow_failure" in registry.comms
-    assert len(registry.comms["morrow_success"]) >= 1
-
-
-def test_narrative_queues_build() -> None:
-    registry = ContentRegistry.load_from_dir(DATA_DIR)
-    queues = registry.build_narrative_queues()
-    assert "morrow_success" in queues
-    assert len(queues["morrow_success"]) >= 1
+    for mgmt in registry.management.values():
+        mgmt.load(registry)       # no-op for now; extends naturally as deps are added

@@ -1,0 +1,12 @@
+[experiment]
+id                  = "proximate_analysis"
+name                = "Proximate Analysis"
+brief               = "Systematic cataloguing of known properties. No direct contact required."
+pressure_on_success = -5
+pressure_on_failure = 10
+
+[experiment.personnel]
+researcher = 2
+
+[experiment.roll]
+base_difficulty = 40

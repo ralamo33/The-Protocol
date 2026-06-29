@@ -1,22 +1,15 @@
 [principal]
-id          = "morrow"
-name        = "Dr. Elara Morrow"
-title       = "Senior Containment Specialist"
-color       = "#06b6d4"
-tone        = "CLINICAL"
+id                   = "morrow"
+name                 = "Dr. Elara Morrow"
+title                = "Senior Containment Specialist"
+color                = "#06b6d4"
 signature_experiment = "proximate_analysis"
-bio         = "Joined after the Event. Does not speak about it."
-
-[principal.skills]
-containment    = 8
-research       = 6
-risk_tolerance = 4
+brief                = "Joined after the Event. Does not speak about it."
 
 [principal.art]
 intact    = "intact.txt"
 damaged   = "damaged.txt"
 corrupted = "corrupted.txt"
-absent    = "absent.txt"
 
 [principal.voice]
 success_pool  = "morrow_success"

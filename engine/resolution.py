@@ -10,13 +10,10 @@ from engine.loader import Anomaly, Experiment, Management, Principal
 @dataclass
 class RoundResult:
     success: bool
-    cohesion_delta: int
     effectiveness_delta: int
-    capability_delta: int
-    personnel_status: str
-    narrative_key: str
     roll: int
     final: int
+    narrative_pool: str
 
 
 def resolve(
@@ -28,30 +25,26 @@ def resolve(
     cycle: int,
 ) -> RoundResult:
     roll = random.randint(0, 100)
-    skill_bonus = principal.skills.containment * 2
     roll_penalty = state.get_roll_penalty()
-    tech_bonus = state.get_tech_bonus()
-
-    final = roll + skill_bonus + experiment.roll.modifier + tech_bonus - roll_penalty
+    final = roll - roll_penalty
     success = final >= experiment.roll.base_difficulty
 
-    outcome = experiment.success if success else experiment.failure
+    effectiveness_delta = (
+        experiment.pressure_on_success if success else experiment.pressure_on_failure
+    )
 
     state.apply_deltas(
-        cohesion=outcome.cohesion_delta + management.cost.cohesion_delta,
-        effectiveness=outcome.effectiveness_delta + management.cost.effectiveness_delta,
-        capability=outcome.capability_delta,
-        budget=outcome.budget_delta - management.cost.budget_cost,
+        effectiveness=effectiveness_delta,
+        cohesion=management.cost.cohesion,
+        budget=-management.cost.budget,
     )
 
-    result = RoundResult(
+    narrative_pool = principal.voice.success_pool if success else principal.voice.failure_pool
+
+    return RoundResult(
         success=success,
-        cohesion_delta=outcome.cohesion_delta,
-        effectiveness_delta=outcome.effectiveness_delta,
-        capability_delta=outcome.capability_delta,
-        personnel_status=outcome.personnel_status,
-        narrative_key=outcome.narrative_key,
+        effectiveness_delta=effectiveness_delta,
         roll=roll,
         final=final,
+        narrative_pool=narrative_pool,
     )
-    return result

@@ -107,11 +107,11 @@ class CycleScreen(Screen):
     # ── Navigation ────────────────────────────────────────────────────────
 
     def _next_anomaly(self) -> None:
-        anomaly_id = self._state.pop_next_anomaly()
-        if anomaly_id is None:
+        anomaly = self._state.pop_next_anomaly()
+        if anomaly is None:
             self._go_to_ending()
             return
-        self._current_anomaly = self._registry.anomalies[anomaly_id]
+        self._current_anomaly = anomaly
         self._cycle_num += 1
         self._phase = "choosing"
         self._render_choosing()
@@ -136,7 +136,7 @@ class CycleScreen(Screen):
             f"[bold {anomaly.color}]{anomaly.name.upper()}[/]"
         )
         self.query_one("#briefing", Static).update(
-            anomaly.briefing or "No brief on file."
+            anomaly.brief or "No brief on file."
         )
         self.query_one("#section-label", Static).update("MANAGEMENT PROTOCOL")
         self.query_one("#result", Static).update("")
@@ -146,7 +146,7 @@ class CycleScreen(Screen):
             mgmt = self._registry.management.get(mgmt_id)
             label = f"[bold]{mgmt_id}[/]" if mgmt is None else (
                 f"[[{i}]  [bold]{mgmt.name}[/bold]\n"
-                f"     {mgmt.description}"
+                f"     {mgmt.brief}"
             )
             self.query_one(f"#opt-{i}", Static).update(label)
 
@@ -154,22 +154,18 @@ class CycleScreen(Screen):
             "Press [1], [2], or [3] to assign a Management Protocol."
         )
 
-    def _render_result(self, mgmt: Management, net: int) -> None:
+    def _render_result(self, mgmt: Management, pressure: int) -> None:
         for i in range(1, 4):
             self.query_one(f"#opt-{i}", Static).update("")
         self.query_one("#section-label", Static).update("")
 
         result_widget = self.query_one("#result", Static)
-        if net >= 0:
+        if pressure == 0:
             result_widget.set_classes("result-ok")
-            result_widget.update(
-                f"→ {mgmt.name.upper()} assigned. Containment holding."
-            )
+            result_widget.update(f"→ {mgmt.name.upper()} assigned. Containment holding.")
         else:
             result_widget.set_classes("result-bad")
-            result_widget.update(
-                f"→ {mgmt.name.upper()} assigned. Containment degraded."
-            )
+            result_widget.update(f"→ {mgmt.name.upper()} assigned. Containment degraded.")
 
         ending = self._state.check_ending()
         if ending is not None:
@@ -177,9 +173,7 @@ class CycleScreen(Screen):
                 "Press SPACE or ENTER to view the final report."
             )
         else:
-            self.query_one("#hint", Static).update(
-                "Press SPACE or ENTER to continue."
-            )
+            self.query_one("#hint", Static).update("Press SPACE or ENTER to continue.")
 
         self._phase = "result"
 
@@ -195,10 +189,14 @@ class CycleScreen(Screen):
         if mgmt is None:
             return
 
-        net = mgmt.cost.effectiveness_delta - anomaly.pressure.base_per_round
-        self._state.apply_deltas(effectiveness=net)
+        self._state.apply_deltas(
+            cohesion=mgmt.cost.cohesion,
+            budget=-mgmt.cost.budget,
+        )
+        pressure = anomaly.pressure.base_per_round
+        self._state.apply_deltas(effectiveness=-pressure)
         self._state.advance_cycle()
-        self._render_result(mgmt, net)
+        self._render_result(mgmt, pressure)
 
     def action_select_1(self) -> None:
         self._apply_selection(_MGMT_ORDER[0])

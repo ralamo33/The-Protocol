@@ -9,48 +9,38 @@ from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from engine.loader import Anomaly, Principal, PrincipalStatus
+
 if TYPE_CHECKING:
     from engine.loader import ContentRegistry
 
 
 EFFECTIVENESS_FAILURE_THRESHOLD = 50
 
+_DEFAULT_RESEARCHER = 5
+_DEFAULT_SECURITY = 3
+_DEFAULT_ENGINEER = 2
+
 
 class EndingType(str, Enum):
-    INHUMAN = "inhuman"
-    BREACH = "breach"
-    WIN = "win"
-
-
-class PrincipalStatus(str, Enum):
-    ACTIVE = "active"
-    INCAPACITATED = "incapacitated"
-    DEAD = "dead"
-    TRANSFORMED = "transformed"
-
-
-class PrincipalState(BaseModel):
-    integrity: int = 100  # 100–70 intact, 69–35 damaged, 34–1 corrupted, 0 absent
-    status: PrincipalStatus = PrincipalStatus.ACTIVE
-    rounds_incapacitated: int = 0
-
-    def art_state(self) -> str:
-        if self.integrity >= 70:
-            return "intact"
-        if self.integrity >= 35:
-            return "damaged"
-        if self.integrity >= 1:
-            return "corrupted"
-        return "absent"
+    INHUMAN = "INHUMAN"
+    BREACH = "BREACH"
+    WIN = "WIN"
 
 
 class Ledger(BaseModel):
-    cohesion: int = 100       # hidden — drives INHUMAN ending at 0
-    effectiveness: int = 100  # hidden — drives BREACH ending at 0
-    budget: int = 100         # shown to player
-    capability: int = 0       # hidden — unlocks experiments/management
-    cycle: int = 0            # hidden — internal round counter
-    director_integrity: int = 100  # hidden — shapes log language
+    cohesion: int = 100
+    effectiveness: int = 100
+    budget: int = 100
+    capability: int = 0
+    cycle: int = 0
+    director_integrity: int = 100
+
+
+class Personnel(BaseModel):
+    researcher: int = _DEFAULT_RESEARCHER
+    security: int = _DEFAULT_SECURITY
+    engineer: int = _DEFAULT_ENGINEER
 
 
 class RoundRecord(BaseModel):
@@ -64,33 +54,28 @@ class RoundRecord(BaseModel):
 
 
 class GameState:
-    """All game resources are private. Only derived signals are public."""
+    """All raw ledger values are private. Only derived signals are public."""
 
     def __init__(
         self,
         ledger: Ledger,
-        principals: dict[str, PrincipalState],
-        anomaly_queue: list[str],
+        principals: dict[str, Principal],
+        anomaly_queue: list[Anomaly],
         history: list[RoundRecord],
         narrative_queues: dict[str, deque[str]],
+        personnel: Personnel | None = None,
     ) -> None:
         self._ledger = ledger
         self._principals = principals
         self._anomaly_queue = anomaly_queue
         self._history = history
         self._narrative_queues = narrative_queues
+        self._personnel = personnel or Personnel()
 
-    # ── Public read interface ──────────────────────────────────────────────
+    # ── Public read — derived signals only ───────────────────────────────
 
-    def get_principal(self, principal_id: str) -> PrincipalState:
-        return self._principals[principal_id]
-
-    def get_active_principals(self) -> list[tuple[str, PrincipalState]]:
-        return [
-            (pid, state)
-            for pid, state in self._principals.items()
-            if state.status == PrincipalStatus.ACTIVE
-        ]
+    def get_active_principals(self) -> list[Principal]:
+        return [p for p in self._principals.values() if p.status == PrincipalStatus.ACTIVE]
 
     def get_budget(self) -> int:
         return self._ledger.budget
@@ -98,28 +83,22 @@ class GameState:
     def get_cycle(self) -> int:
         return self._ledger.cycle
 
-    def get_capability(self) -> int:
-        return self._ledger.capability
+    def get_roll_penalty(self) -> int:
+        loss = 100 - self._ledger.cohesion
+        return int(loss * 0.3)
 
-    # ── Derived signals — resources NEVER returned raw ────────────────────
+    def get_tone_modifier(self) -> str:
+        if self._ledger.cohesion >= 70:
+            return "WARM"
+        if self._ledger.cohesion >= 40:
+            return "NEUTRAL"
+        return "COLD"
 
     def is_cohesion_critical(self) -> bool:
         return self._ledger.cohesion <= 20
 
     def is_effectiveness_critical(self) -> bool:
         return self._ledger.effectiveness <= 20
-
-    def get_tone_modifier(self) -> float:
-        """0.0 = warm/human, 1.0 = cold/clinical. Drives narrative selection."""
-        return 1.0 - (self._ledger.cohesion / 100.0)
-
-    def get_roll_penalty(self) -> int:
-        """Hidden humanity penalty applied to resolution rolls."""
-        loss = 100 - self._ledger.cohesion
-        return int(loss * 0.3)
-
-    def get_tech_bonus(self) -> int:
-        return self._ledger.capability // 10
 
     def check_ending(self) -> EndingType | None:
         if self._ledger.cohesion <= 0:
@@ -138,13 +117,12 @@ class GameState:
             return "[no narrative]"
         line = q.popleft()
         if not q:
-            # Reshuffle when exhausted
             lines = list(self._narrative_queues[pool_key])
             random.shuffle(lines)
             self._narrative_queues[pool_key] = deque(lines)
         return line
 
-    # ── Public write interface ────────────────────────────────────────────
+    # ── Public write ──────────────────────────────────────────────────────
 
     def apply_deltas(
         self,
@@ -159,53 +137,68 @@ class GameState:
         self._ledger.effectiveness = max(0, min(100, self._ledger.effectiveness + effectiveness))
         self._ledger.budget = max(0, self._ledger.budget + budget)
         self._ledger.capability = max(0, min(100, self._ledger.capability + capability))
-        self._ledger.director_integrity = max(0, min(100, self._ledger.director_integrity + director_integrity))
+        self._ledger.director_integrity = max(
+            0, min(100, self._ledger.director_integrity + director_integrity)
+        )
 
     def advance_cycle(self) -> None:
         self._ledger.cycle += 1
-        for pid, state in self._principals.items():
-            if state.status == PrincipalStatus.INCAPACITATED:
-                state.rounds_incapacitated -= 1
-                if state.rounds_incapacitated <= 0:
-                    state.status = PrincipalStatus.ACTIVE
-                    state.rounds_incapacitated = 0
+        self._personnel = Personnel()
+        for principal in self._principals.values():
+            if principal.status == PrincipalStatus.INCAPACITATED:
+                principal.rounds_incapacitated -= 1
+                if principal.rounds_incapacitated <= 0:
+                    principal.status = PrincipalStatus.ACTIVE
+                    principal.rounds_incapacitated = 0
 
-    def record_round(self, record: RoundRecord) -> None:
-        self._history.append(record)
-
-    def pop_next_anomaly(self) -> str | None:
+    def pop_next_anomaly(self) -> Anomaly | None:
         if self._anomaly_queue:
             return self._anomaly_queue.pop(0)
         return None
+
+    def record_round(self, record: RoundRecord) -> None:
+        self._history.append(record)
 
     # ── Persistence ───────────────────────────────────────────────────────
 
     def save(self, path: Path) -> None:
         path.parent.mkdir(parents=True, exist_ok=True)
         data = {
-            "cycle": self._ledger.cycle,
-            "anomaly_queue": self._anomaly_queue,
-            "principals": {
-                pid: state.model_dump() for pid, state in self._principals.items()
-            },
             "ledger": self._ledger.model_dump(),
+            "principals": {
+                pid: {
+                    "integrity": p.integrity,
+                    "status": p.status.value,
+                    "rounds_incapacitated": p.rounds_incapacitated,
+                }
+                for pid, p in self._principals.items()
+            },
+            "anomaly_queue": [a.id for a in self._anomaly_queue],
             "history": [r.model_dump() for r in self._history],
         }
         path.write_text(json.dumps(data, indent=2))
 
     @classmethod
-    def load(cls, path: Path, registry: "ContentRegistry") -> "GameState":
+    def load(cls, path: Path, registry: ContentRegistry) -> GameState:
         data = json.loads(path.read_text())
         ledger = Ledger(**data["ledger"])
-        principals = {pid: PrincipalState(**s) for pid, s in data["principals"].items()}
+        principals: dict[str, Principal] = {}
+        for pid, state in data["principals"].items():
+            p = registry.principals[pid].model_copy(deep=True)
+            p.integrity = state["integrity"]
+            p.status = PrincipalStatus(state["status"])
+            p.rounds_incapacitated = state["rounds_incapacitated"]
+            principals[pid] = p
+        anomaly_queue = [registry.anomalies[aid] for aid in data["anomaly_queue"]]
         history = [RoundRecord(**r) for r in data["history"]]
         queues = registry.build_narrative_queues()
-        return cls(ledger, principals, data["anomaly_queue"], history, queues)
+        return cls(ledger, principals, anomaly_queue, history, queues)
 
     @classmethod
-    def new_run(cls, registry: "ContentRegistry") -> "GameState":
+    def new_run(cls, registry: ContentRegistry) -> GameState:
         anomaly_ids = list(registry.anomalies.keys())
         random.shuffle(anomaly_ids)
-        principals = {pid: PrincipalState() for pid in registry.principals}
+        anomaly_queue = [registry.anomalies[aid] for aid in anomaly_ids]
+        principals = {pid: p.model_copy(deep=True) for pid, p in registry.principals.items()}
         queues = registry.build_narrative_queues()
-        return cls(Ledger(), principals, anomaly_ids, [], queues)
+        return cls(Ledger(), principals, anomaly_queue, [], queues)

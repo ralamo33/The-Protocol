@@ -1,9 +1,10 @@
 [management]
-id          = "soft_watch"
-name        = "Soft Watch"
-description = "Passive observation protocol. Minimal personnel exposure. Suitable for inert or non-aggressive anomalies."
+id    = "soft_watch"
+name  = "Soft Watch"
+brief = "Passive observation protocol. Minimal personnel exposure. Suitable for inert or non-aggressive anomalies."
 
 [management.cost]
-effectiveness_delta = 0
-cohesion_delta      = 0
-budget_cost         = 5
+cohesion = 0
+budget   = 5
+security = 0
+engineer = 0

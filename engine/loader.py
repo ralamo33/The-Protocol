@@ -2,24 +2,26 @@ from __future__ import annotations
 
 import tomllib
 from collections import deque
+from enum import Enum
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, Field
 
 
-# ── Principal schema ───────────────────────────────────────────────────────────
+class PrincipalStatus(str, Enum):
+    ACTIVE = "ACTIVE"
+    INCAPACITATED = "INCAPACITATED"
+    DEAD = "DEAD"
+    TRANSFORMED = "TRANSFORMED"
 
-class PrincipalSkills(BaseModel):
-    containment: int
-    research: int
-    risk_tolerance: int
 
+# ── Principal ──────────────────────────────────────────────────────────────────
 
 class PrincipalArt(BaseModel):
     intact: str
     damaged: str
     corrupted: str
-    absent: str = ""
 
 
 class PrincipalVoice(BaseModel):
@@ -29,33 +31,66 @@ class PrincipalVoice(BaseModel):
 
 
 class Principal(BaseModel):
+    # TOML-sourced fields
     id: str
     name: str
     title: str
     color: str
-    tone: str
     signature_experiment: str
-    bio: str = ""
-    transforms_into: str = ""
-    skills: PrincipalSkills
+    brief: str
     art: PrincipalArt
     voice: PrincipalVoice
-    # resolved at load time — absolute paths
+
+    # Runtime state carried on Principal (100–70 intact · 69–35 damaged · 34–1 corrupted · 0 absent)
+    integrity: int = 100
+    status: PrincipalStatus = PrincipalStatus.ACTIVE
+    rounds_incapacitated: int = 0
+
+    # Resolved at load time
     art_paths: dict[str, Path] = Field(default_factory=dict)
 
+    def art_state(self) -> str:
+        if self.integrity >= 70:
+            return "intact"
+        if self.integrity >= 35:
+            return "damaged"
+        if self.integrity >= 1:
+            return "corrupted"
+        return "absent"
 
-# ── Anomaly schema ─────────────────────────────────────────────────────────────
+    def load(self, registry: ContentRegistry) -> None:
+        """Validate cross-references and file paths. Raises ValueError on missing refs."""
+        if self.signature_experiment and self.signature_experiment not in registry.experiments:
+            raise ValueError(
+                f"Principal '{self.id}': signature_experiment '{self.signature_experiment}' "
+                f"not in registry"
+            )
+        for pool in (self.voice.success_pool, self.voice.failure_pool):
+            if pool and pool not in registry.comms:
+                raise ValueError(
+                    f"Principal '{self.id}': comms pool '{pool}' not in registry"
+                )
+        if self.voice.incident_pool and self.voice.incident_pool not in registry.comms:
+            raise ValueError(
+                f"Principal '{self.id}': incident_pool '{self.voice.incident_pool}' "
+                f"not in registry"
+            )
+        for state_name, path in self.art_paths.items():
+            if not path.exists():
+                raise ValueError(
+                    f"Principal '{self.id}': art file for '{state_name}' missing: {path}"
+                )
+
+
+# ── Anomaly ────────────────────────────────────────────────────────────────────
 
 class AnomalyPressure(BaseModel):
     base_per_round: int
-    max_rounds: int
 
 
-class AnomalyOutcomeWeights(BaseModel):
-    cohesion_cost: list[int] = [-10, -2]
-    effectiveness_delta: list[int] = [-5, 5]
-    capability_gain: list[int] = [2, 10]
-    personnel_risk: float = 0.3
+class AnomalyEscapeCost(BaseModel):
+    security: int = 0
+    effectiveness: int = 0
 
 
 class Anomaly(BaseModel):
@@ -66,58 +101,76 @@ class Anomaly(BaseModel):
     descriptors: list[str] = []
     threat_level: int
     art_file: str
-    experiments: list[str]
-    management_methods: list[str]
+    experiments: list[str] = []
+    management_methods: list[str] = []
     pressure: AnomalyPressure
-    outcome_weights: AnomalyOutcomeWeights = Field(default_factory=AnomalyOutcomeWeights)
-    briefing: str = ""
+    brief: str = ""
+    escape_cost: AnomalyEscapeCost = Field(default_factory=AnomalyEscapeCost)
     art_path: Path | None = None
 
+    def load(self, registry: ContentRegistry) -> None:
+        for eid in self.experiments:
+            if eid not in registry.experiments:
+                raise ValueError(
+                    f"Anomaly '{self.id}': experiment '{eid}' not in registry"
+                )
+        for mid in self.management_methods:
+            if mid not in registry.management:
+                raise ValueError(
+                    f"Anomaly '{self.id}': management '{mid}' not in registry"
+                )
+        if self.art_path and not self.art_path.exists():
+            raise ValueError(
+                f"Anomaly '{self.id}': art file missing: {self.art_path}"
+            )
 
-# ── Experiment schema ──────────────────────────────────────────────────────────
+
+# ── Experiment ─────────────────────────────────────────────────────────────────
+
+class ExperimentPersonnel(BaseModel):
+    researcher: int = 0
+
 
 class ExperimentRoll(BaseModel):
     base_difficulty: int
-    modifier: int = 0
-
-
-class ExperimentOutcome(BaseModel):
-    cohesion_delta: int = 0
-    effectiveness_delta: int = 0
-    capability_delta: int = 0
-    budget_delta: int = 0
-    personnel_status: str = "SAFE"
-    narrative_key: str
 
 
 class Experiment(BaseModel):
     id: str
     name: str
-    description: str
-    risk_level: str  # LOW | MEDIUM | HIGH
-    requires_capability: int = 0
+    brief: str
+    personnel: ExperimentPersonnel = Field(default_factory=ExperimentPersonnel)
     roll: ExperimentRoll
-    success: ExperimentOutcome
-    failure: ExperimentOutcome
+    pressure_on_success: int = 0
+    pressure_on_failure: int = 0
+
+    def load(self, registry: ContentRegistry) -> None:
+        pass
 
 
-# ── Management schema ──────────────────────────────────────────────────────────
+# ── Management ─────────────────────────────────────────────────────────────────
 
 class ManagementCost(BaseModel):
-    cohesion_delta: int = 0
-    budget_cost: int = 0
-    effectiveness_delta: int = 0
+    cohesion: int = 0
+    budget: int = 0
+    security: int = 0
+    engineer: int = 0
+
+
+class ManagementNarrative(BaseModel):
+    success: str = ""
+    failure: str = ""
 
 
 class Management(BaseModel):
     id: str
     name: str
-    description: str
-    requires_capability: int = 0
-    requires_experiment: str = ""
-    cost: ManagementCost
-    narrative_success: str = ""
-    narrative_flavor: str = ""
+    brief: str
+    cost: ManagementCost = Field(default_factory=ManagementCost)
+    narrative: ManagementNarrative = Field(default_factory=ManagementNarrative)
+
+    def load(self, registry: ContentRegistry) -> None:
+        pass
 
 
 # ── Content Registry ───────────────────────────────────────────────────────────
@@ -130,10 +183,10 @@ class ContentRegistry:
         self.anomalies: dict[str, Anomaly] = {}
         self.experiments: dict[str, Experiment] = {}
         self.management: dict[str, Management] = {}
-        self.comms: dict[str, list[str]] = {}  # pool_key → lines
+        self.comms: dict[str, list[str]] = {}
 
     @classmethod
-    def load_from_dir(cls, data_dir: str | Path) -> "ContentRegistry":
+    def load_from_dir(cls, data_dir: str | Path) -> ContentRegistry:
         root = Path(data_dir)
         registry = cls()
         registry._load_principals(root / "principals")
@@ -154,14 +207,11 @@ class ContentRegistry:
                 continue
             data = tomllib.loads(toml_files[0].read_text())
             p = Principal(**data["principal"])
-            # Resolve art paths relative to principal directory
             p.art_paths = {
                 "intact": principal_dir / p.art.intact,
                 "damaged": principal_dir / p.art.damaged,
                 "corrupted": principal_dir / p.art.corrupted,
             }
-            if p.art.absent:
-                p.art_paths["absent"] = principal_dir / p.art.absent
             self.principals[p.id] = p
 
     def _load_anomalies(self, path: Path) -> None:
