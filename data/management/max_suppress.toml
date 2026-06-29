@@ -1,0 +1,9 @@
+[management]
+id          = "max_suppress"
+name        = "Maximum Suppression"
+description = "Full lockdown. Dedicated suppression field, continuous specialist oversight, redundant failsafes. Required for KETER-class threats."
+
+[management.cost]
+effectiveness_delta = 50
+cohesion_delta      = -8
+budget_cost         = 40

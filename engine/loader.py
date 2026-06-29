@@ -61,7 +61,7 @@ class AnomalyOutcomeWeights(BaseModel):
 class Anomaly(BaseModel):
     id: str
     display_id: str
-    classification: str  # SAFE | EUCLID | KETER
+    color: str
     name: str
     descriptors: list[str] = []
     threat_level: int

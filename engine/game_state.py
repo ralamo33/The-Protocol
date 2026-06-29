@@ -13,6 +13,9 @@ if TYPE_CHECKING:
     from engine.loader import ContentRegistry
 
 
+EFFECTIVENESS_FAILURE_THRESHOLD = 50
+
+
 class EndingType(str, Enum):
     INHUMAN = "inhuman"
     BREACH = "breach"
@@ -121,7 +124,7 @@ class GameState:
     def check_ending(self) -> EndingType | None:
         if self._ledger.cohesion <= 0:
             return EndingType.INHUMAN
-        if self._ledger.effectiveness <= 0:
+        if self._ledger.effectiveness <= EFFECTIVENESS_FAILURE_THRESHOLD:
             return EndingType.BREACH
         if not self._anomaly_queue:
             return EndingType.WIN

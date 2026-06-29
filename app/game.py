@@ -1,6 +1,12 @@
+from pathlib import Path
+
 from textual.app import App
 
-from app.screens.log_screen import LogScreen
+from app.screens.cycle_screen import CycleScreen
+from engine.game_state import GameState
+from engine.loader import ContentRegistry
+
+_DATA_DIR = Path(__file__).parent.parent / "data"
 
 
 class FoundationApp(App):
@@ -15,7 +21,7 @@ class FoundationApp(App):
     }
     """
 
-    BINDINGS = [("q", "quit", "Quit")]
-
     def on_mount(self) -> None:
-        self.push_screen(LogScreen())
+        registry = ContentRegistry.load_from_dir(_DATA_DIR)
+        state = GameState.new_run(registry)
+        self.push_screen(CycleScreen(state, registry))

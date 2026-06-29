@@ -1,0 +1,15 @@
+[anomaly]
+id              = "the_dreamer"
+display_id      = "AO-101"
+color           = "#a78bfa"
+name            = "The Dreamer"
+descriptors     = ["somnambulant", "reality-adjacent"]
+threat_level    = 3
+art_file        = "art.txt"
+experiments     = []
+management_methods = ["soft_watch", "standard_cage", "max_suppress"]
+briefing        = "Subject is a child, apparent age 8. Has not regained consciousness since initial contact. Dreams propagate outward as spatial and cognitive distortions. Personnel within 20m report false memories, altered documents, and lost time. Containment must suppress the dream-field without waking the subject — termination of the dream state has not been achievable."
+
+[anomaly.pressure]
+base_per_round = 20
+max_rounds     = 3

@@ -1,0 +1,15 @@
+[anomaly]
+id              = "hunger"
+display_id      = "AO-102"
+color           = "#ef4444"
+name            = "Hunger"
+descriptors     = ["amorphous", "adaptive", "consumptive"]
+threat_level    = 5
+art_file        = "art.txt"
+experiments     = []
+management_methods = ["soft_watch", "standard_cage", "max_suppress"]
+briefing        = "Entity is a featureless mass of indeterminate composition. Capable of compressing to pass through gaps as small as 0.3mm, then expanding to consume matter at rapid rate. Three previous containment failures on record. Current cell uses multi-layered pressure seals and continuous volumetric monitoring. Any gap in active suppression results in immediate breach. No casualties reported in this facility — yet."
+
+[anomaly.pressure]
+base_per_round = 50
+max_rounds     = 1
